@@ -1,0 +1,244 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    /* Golden & Vibrant Theme for Content Creators */
+    /* Primary: Rich Gold - Wealth, Prestige, Creativity */
+    --background: 0 0% 99%;
+    --foreground: 20 14.3% 4.1%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14.3% 4.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14.3% 4.1%;
+
+    /* Primary: Golden - represents luxury, creativity, warmth */
+    --primary: 42 84% 61%;
+    --primary-foreground: 20 14.3% 4.1%;
+
+    /* Secondary: Coral/Amber - vibrant, energetic, engaging */
+    --secondary: 16 88% 62%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Accent: Teal/Emerald - balance, growth, action */
+    --accent: 174 63% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Muted: Soft Gray */
+    --muted: 210 14% 89%;
+    --muted-foreground: 215 13% 34%;
+
+    /* Success: Vibrant Green */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+
+    /* Warning: Vibrant Orange */
+    --warning: 38 92% 50%;
+    --warning-foreground: 20 14.3% 4.1%;
+
+    /* Destructive: Vibrant Red */
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+
+    --border: 210 14% 93%;
+    --input: 210 14% 93%;
+    --ring: 42 84% 61%;
+
+    /* Chart colors - vibrant palette */
+    --chart-1: 42 84% 61%;    /* Gold */
+    --chart-2: 16 88% 62%;    /* Coral */
+    --chart-3: 174 63% 50%;   /* Teal */
+    --chart-4: 265 90% 65%;   /* Vibrant Purple */
+    --chart-5: 38 92% 50%;    /* Orange */
+
+    --radius: 0.75rem;
+
+    /* Additional custom properties */
+    --gold-light: hsl(42 84% 75%);
+    --gold-dark: hsl(42 84% 45%);
+    --coral-light: hsl(16 88% 75%);
+    --teal-dark: hsl(174 63% 38%);
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 42 84% 95%;
+    --card: 20 14.3% 8%;
+    --card-foreground: 42 84% 95%;
+    --popover: 20 14.3% 8%;
+    --popover-foreground: 42 84% 95%;
+
+    /* Primary: Golden (slightly muted for dark mode) */
+    --primary: 42 84% 65%;
+    --primary-foreground: 20 14.3% 4.1%;
+
+    /* Secondary: Coral (vibrant in dark) */
+    --secondary: 16 88% 65%;
+    --secondary-foreground: 20 14.3% 4.1%;
+
+    /* Accent: Teal (bright in dark) */
+    --accent: 174 80% 55%;
+    --accent-foreground: 20 14.3% 4.1%;
+
+    --muted: 215 13% 26%;
+    --muted-foreground: 210 14% 73%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 58%;
+    --warning-foreground: 20 14.3% 4.1%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 60 9.1% 97.8%;
+
+    --border: 215 13% 20%;
+    --input: 215 13% 20%;
+    --ring: 42 84% 65%;
+
+    --chart-1: 42 84% 65%;
+    --chart-2: 16 88% 65%;
+    --chart-3: 174 80% 55%;
+    --chart-4: 265 90% 65%;
+    --chart-5: 38 92% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rounding" 1;
+  }
+
+  /* Smooth transitions throughout */
+  * {
+    @apply transition-colors duration-200;
+  }
+
+  /* Typography Hierarchy */
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-bold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5 {
+    @apply text-lg font-semibold;
+  }
+
+  h6 {
+    @apply text-base font-semibold;
+  }
+
+  /* Gradient utilities */
+  .bg-gradient-gold {
+    @apply bg-gradient-to-r from-[hsl(42_84%_55%)] to-[hsl(42_84%_70%)];
+  }
+
+  .bg-gradient-vibrant {
+    @apply bg-gradient-to-r from-[hsl(42_84%_61%)] via-[hsl(16_88%_62%)] to-[hsl(174_63%_50%)];
+  }
+
+  .bg-gradient-brand {
+    @apply bg-gradient-to-br from-[hsl(42_84%_61%)] to-[hsl(16_88%_62%)];
+  }
+
+  /* Text gradients */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent;
+  }
+
+  /* Glow effects */
+  .glow-gold {
+    @apply shadow-lg shadow-primary/30;
+  }
+
+  .glow-coral {
+    @apply shadow-lg shadow-secondary/30;
+  }
+
+  .glow-teal {
+    @apply shadow-lg shadow-accent/30;
+  }
+}
+
+@layer components {
+  /* Premium button styles */
+  .btn-premium {
+    @apply bg-gradient-to-r from-primary to-secondary text-primary-foreground font-semibold rounded-lg px-6 py-3 hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 hover:scale-105;
+  }
+
+  .btn-premium-outline {
+    @apply border-2 border-primary text-primary hover:bg-primary/10 font-semibold rounded-lg px-6 py-3 transition-all duration-300;
+  }
+
+  /* Animated gradient border */
+  .border-gradient {
+    @apply relative after:absolute after:inset-0 after:rounded-lg after:p-0.5 after:bg-gradient-to-r after:from-primary after:to-secondary after:-z-10;
+  }
+
+  /* Cards with premium styling */
+  .card-premium {
+    @apply bg-card rounded-xl border border-border/50 shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary/30;
+  }
+
+  /* Shimmer effect for loading */
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+
+  .shimmer {
+    animation: shimmer 2s infinite;
+    background: linear-gradient(
+      to right,
+      hsl(210 14% 89%),
+      hsl(210 14% 93%),
+      hsl(210 14% 89%)
+    );
+    background-size: 1000px 100%;
+  }
+
+  /* Pulse animation */
+  @keyframes pulse-custom {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  .pulse-custom {
+    animation: pulse-custom 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
