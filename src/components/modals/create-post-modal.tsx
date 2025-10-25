@@ -2,7 +2,12 @@ import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
-import { ImageIcon, Video, Send, Sparkles, X, Zap, Calendar, CheckCircle2, AlertCircle, Upload, FileVideo, Image as ImageIconLucide } from 'lucide-react';
+import { ImageIcon, Video, Send, 
+  Sparkles, X, Zap, Calendar,
+   CheckCircle2, AlertCircle,
+    Upload, FileVideo,
+     Image as ImageIconLucide
+     } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
