@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,12 +23,13 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-  
+  const searchParams = new URLSearchParams(window.location.search);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [postContent, setPostContent] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -38,7 +39,7 @@ export default function DashboardOverviewPage() {
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
   const connectedPlatforms = connections?.map((c: any) => c.platform.toLowerCase()) || [];
-
+  
   const platforms = [
     { id: 'twitter', name: 'Twitter/X', icon: Twitter, color: 'bg-black', limit: 280 },
     { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'bg-blue-600', limit: 63206 },
@@ -78,7 +79,15 @@ export default function DashboardOverviewPage() {
         : [...prev, platformId]
     );
   };
-
+ 
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Social account connected successfully!');
+    }else if (searchParams.get('error') ) {
+        toast.error('Failed to connect social account. Please try again.');
+    }
+  }
+    ,[searchParams])
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
