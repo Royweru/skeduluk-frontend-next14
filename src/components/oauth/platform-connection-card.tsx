@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   Twitter, Facebook, Linkedin, CheckCircle, AlertCircle, 
-  Loader2, ExternalLink, Unlink 
+  Loader2, ExternalLink, Unlink, Instagram, Music, Youtube
 } from 'lucide-react';
 import { useOAuth } from '@/hooks/api/use-oauth';
 import { cn } from '@/lib/utils';
@@ -49,6 +49,24 @@ const PLATFORMS: Platform[] = [
     color: 'text-blue-700',
     bgColor: 'bg-blue-700',
     features: ['Professional content', 'Article publishing', 'Company pages', 'Engagement metrics']
+  },
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    description: 'Share photos, reels, and stories with your audience',
+    icon: Instagram,
+    color: 'text-pink-600',
+    bgColor: 'bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500',
+    features: ['Photo & video posts', 'Stories & Reels', 'Carousel posts', 'Hashtag optimization']
+  },
+  {
+    id: 'tiktok',
+    name: 'TikTok',
+    description: 'Create viral short-form video content',
+    icon: Music,
+    color: 'text-black',
+    bgColor: 'bg-black',
+    features: ['Short-form videos', 'Trending sounds', 'Hashtag challenges', 'Creator analytics']
   }
 ];
 
@@ -91,7 +109,7 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {PLATFORMS.map((platform) => {
           const connection = connections.find(
             (c: any) => c.platform.toLowerCase() === platform.id
