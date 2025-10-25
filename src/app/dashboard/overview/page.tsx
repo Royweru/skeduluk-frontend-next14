@@ -159,7 +159,7 @@ export default function DashboardOverviewPage() {
                       >
                         <div className="flex items-center gap-3">
                           <div className={cn("p-2 rounded-lg text-white", platform.color)}>
-                            <PlatformIcon className="h-5 w-5" />
+                            <PlatformIcon className="size-6" />
                           </div>
                           <div className="flex-1">
                             <p className="font-semibold text-sm">{platform.name}</p>
@@ -168,7 +168,7 @@ export default function DashboardOverviewPage() {
                             </p>
                           </div>
                           {isConnected && (
-                            <CheckCircle className="h-5 w-5 text-green-600" />
+                            <CheckCircle className="size-6 text-green-600" />
                           )}
                         </div>
                       </button>
