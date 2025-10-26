@@ -343,7 +343,8 @@ export default function DashboardOverviewPage() {
                     {posts.slice(0, 6).map((post: any) => (
                       <div
                         key={post.id}
-                        className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all bg-white"
+                        className="p-4 rounded-lg border border-gray-200 hover:border-blue-300
+                         hover:shadow-md transition-all bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
@@ -505,7 +506,8 @@ export default function DashboardOverviewPage() {
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600
+               to-purple-600 bg-clip-text text-transparent">
                 Create New Post
               </DialogTitle>
             </DialogHeader>
@@ -574,7 +576,8 @@ export default function DashboardOverviewPage() {
                   >
                     {isEnhancing ? (
                       <>
-                        <div className="w-4 h-4 animate-spin rounded-full border-2 border-purple-600 border-t-transparent" />
+                        <div className="w-4 h-4 animate-spin rounded-full border-2
+                         border-purple-600 border-t-transparent" />
                         Enhancing...
                       </>
                     ) : (
@@ -625,7 +628,8 @@ export default function DashboardOverviewPage() {
                 )}
 
                 {aiEnhanced && (
-                  <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200">
+                  <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-purple-50
+                   to-blue-50 border border-purple-200">
                     <div className="flex items-center gap-2 text-sm text-purple-800">
                       <Zap className="h-4 w-4" />
                       <span className="font-medium">AI Enhanced ✨</span>
@@ -648,12 +652,14 @@ export default function DashboardOverviewPage() {
                       onChange={handleImageUpload}
                       className="hidden"
                     />
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6
+                     text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer">
                       <ImageIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                       <p className="text-sm text-gray-600">Upload Images</p>
                     </div>
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer">
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center
+                   hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer">
                     <Mic className="h-8 w-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-gray-600">Record Audio</p>
                   </div>
@@ -677,7 +683,8 @@ export default function DashboardOverviewPage() {
                               prev.filter((_, i) => i !== idx)
                             )
                           }
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white 
+                          rounded-full hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -696,7 +703,8 @@ export default function DashboardOverviewPage() {
                   type="datetime-local"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500
+                   focus:border-transparent"
                 />
               </div>
 
@@ -713,7 +721,8 @@ export default function DashboardOverviewPage() {
                   disabled={
                     !postContent.trim() || selectedPlatforms.length === 0
                   }
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600
+                   hover:from-blue-700 hover:to-purple-700"
                 >
                   <Send className="mr-2 h-4 w-4" />
                   {scheduledDate ? "Schedule Post" : "Post Now"}
