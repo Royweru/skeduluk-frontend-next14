@@ -1,59 +1,155 @@
+"use client";
 
-'use client';
-
-import { useState,useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Plus, Calendar, TrendingUp, Sparkles, Image as ImageIcon, Mic, 
-  Twitter, Facebook, Linkedin, Clock, MoreHorizontal, Zap,
-  Link as LinkIcon, BarChart3, Users, CheckCircle, AlertTriangle,
-  Eye, Heart, MessageCircle, Share2, ArrowUpRight, Send, X,
-  Instagram, Music, Youtube
-} from 'lucide-react';
-import { usePosts } from '@/hooks/api/use-posts';
-import { useSocialConnections } from '@/hooks/api/use-social-connections';
-import { format } from 'date-fns';
-import Link from 'next/link';
-import { useAuth } from '@/providers/auth-provider';
-import { cn } from '@/lib/utils';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  Calendar,
+  TrendingUp,
+  Sparkles,
+  Image as ImageIcon,
+  Mic,
+  Twitter,
+  Facebook,
+  Linkedin,
+  Clock,
+  MoreHorizontal,
+  Zap,
+  Link as LinkIcon,
+  BarChart3,
+  Users,
+  CheckCircle,
+  AlertTriangle,
+  Eye,
+  Heart,
+  MessageCircle,
+  Share2,
+  ArrowUpRight,
+  Send,
+  X,
+  Instagram,
+  Music,
+  Youtube,
+  Loader2,
+} from "lucide-react";
+import { usePosts } from "@/hooks/api/use-posts";
+import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import { format } from "date-fns";
+import Link from "next/link";
+import { useAuth } from "@/providers/auth-provider";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import { useOAuth } from "@/hooks/api/use-oauth";
 
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
+  const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
   const searchParams = new URLSearchParams(window.location.search);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [postContent, setPostContent] = useState('');
+  const [postContent, setPostContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledDate, setScheduledDate] = useState("");
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
-  const connectedPlatforms = connections?.map((c: any) => c.platform.toLowerCase()) || [];
-  
-  const platforms = [
-    { id: 'twitter', name: 'Twitter/X', icon: Twitter, color: 'bg-black', limit: 280 },
-    { id: 'facebook', name: 'Facebook', icon: Facebook, color: 'bg-blue-600', limit: 63206 },
-    { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700', limit: 3000 },
-    { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500', limit: 2200 },
-    { id: 'tiktok', name: 'TikTok', icon: Music, color: 'bg-black', limit: 2200 },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600', limit: 5000 }
-  ];
+  const connectedPlatforms =
+    connections?.map((c: any) => c.platform.toLowerCase()) || [];
 
+  const platforms = [
+    {
+      id: "twitter",
+      name: "Twitter/X",
+      icon: Twitter,
+      color: "bg-black",
+      limit: 280,
+    },
+    {
+      id: "facebook",
+      name: "Facebook",
+      icon: Facebook,
+      color: "bg-blue-600",
+      limit: 63206,
+    },
+    {
+      id: "linkedin",
+      name: "LinkedIn",
+      icon: Linkedin,
+      color: "bg-blue-700",
+      limit: 3000,
+    },
+    {
+      id: "instagram",
+      name: "Instagram",
+      icon: Instagram,
+      color: "bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500",
+      limit: 2200,
+    },
+    {
+      id: "tiktok",
+      name: "TikTok",
+      icon: Music,
+      color: "bg-black",
+      limit: 2200,
+    },
+    // { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600', limit: 5000 }
+  ];
+  const handlePlatformCardClick = async (platformId: string) => {
+    const isConnected = connectedPlatforms.includes(platformId);
+
+    if (!isConnected) {
+      try {
+        await initiateOAuth(platformId);
+      } catch (error) {
+        // Error already handled
+      }
+    }
+  };
   const quickStats = [
-    { label: 'Total Posts', value: user?.posts_used || 0, icon: BarChart3, color: 'text-blue-600' },
-    { label: 'Scheduled', value: posts?.filter((p: any) => p.status === 'scheduled').length || 0, icon: Clock, color: 'text-purple-600' },
-    { label: 'Connected', value: connections?.length || 0, icon: LinkIcon, color: 'text-green-600' },
-    { label: 'Success Rate', value: '94%', icon: TrendingUp, color: 'text-orange-600' }
+    {
+      label: "Total Posts",
+      value: user?.posts_used || 0,
+      icon: BarChart3,
+      color: "text-blue-600",
+    },
+    {
+      label: "Scheduled",
+      value: posts?.filter((p: any) => p.status === "scheduled").length || 0,
+      icon: Clock,
+      color: "text-purple-600",
+    },
+    {
+      label: "Connected",
+      value: connections?.length || 0,
+      icon: LinkIcon,
+      color: "text-green-600",
+    },
+    {
+      label: "Success Rate",
+      value: "94%",
+      icon: TrendingUp,
+      color: "text-orange-600",
+    },
   ];
 
   const handleEnhanceContent = async () => {
@@ -73,34 +169,34 @@ export default function DashboardOverviewPage() {
 
   const togglePlatform = (platformId: string) => {
     if (!connectedPlatforms.includes(platformId)) return;
-    setSelectedPlatforms(prev => 
-      prev.includes(platformId) 
-        ? prev.filter(p => p !== platformId)
+    setSelectedPlatforms((prev) =>
+      prev.includes(platformId)
+        ? prev.filter((p) => p !== platformId)
         : [...prev, platformId]
     );
   };
- 
+
   useEffect(() => {
-    if (searchParams.get('success') === 'true') {
-      toast.success('Social account connected successfully!');
-    }else if (searchParams.get('error') ) {
-        toast.error('Failed to connect social account. Please try again.');
+    if (searchParams.get("success") === "true") {
+      toast.success("Social account connected successfully!");
+    } else if (searchParams.get("error")) {
+      toast.error("Failed to connect social account. Please try again.");
     }
-  }
-    ,[searchParams])
+  }, [searchParams]);
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Welcome back, {user?.username}!
             </h1>
-            <p className="text-gray-600 mt-1">Here's what's happening with your social presence</p>
+            <p className="text-gray-600 mt-1">
+              Here's what's happening with your social presence
+            </p>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowCreateModal(true)}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
           >
@@ -112,14 +208,22 @@ export default function DashboardOverviewPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickStats.map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-md hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
+            <Card
+              key={stat.label}
+              className="border-0 shadow-md hover:shadow-lg transition-shadow bg-white/80 backdrop-blur"
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
                     <p className="text-3xl font-bold">{stat.value}</p>
                   </div>
-                  <div className={cn("p-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100", stat.color)}>
+                  <div
+                    className={cn(
+                      "p-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100",
+                      stat.color
+                    )}
+                  >
                     <stat.icon className="h-6 w-6" />
                   </div>
                 </div>
@@ -130,17 +234,17 @@ export default function DashboardOverviewPage() {
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
-          
           {/* Left Column - Recent Posts */}
           <div className="lg:col-span-2 space-y-6">
-            
             {/* Connected Accounts */}
             <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Connected Accounts</CardTitle>
-                    <CardDescription>Connect your social media platforms</CardDescription>
+                    <CardDescription>
+                      Connect your social media platforms
+                    </CardDescription>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/dashboard/social">Manage</Link>
@@ -150,27 +254,48 @@ export default function DashboardOverviewPage() {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                   {platforms.map((platform) => {
-                    const isConnected = connectedPlatforms.includes(platform.id);
+                    const isConnected = connectedPlatforms.includes(
+                      platform.id
+                    );
                     const PlatformIcon = platform.icon;
-                    
+
                     return (
                       <button
                         key={platform.id}
+                        onClick={() => handlePlatformCardClick(platform.id)}
+                        disabled={isConnected || isOAuthLoading}
                         className={cn(
                           "p-4 rounded-xl border-2 transition-all text-left",
-                          isConnected 
-                            ? "border-green-500 bg-green-50 hover:bg-green-100" 
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                          isConnected
+                            ? "border-green-500 bg-green-50"
+                            : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer hover:shadow-md",
+                          connectingPlatform === platform.id && "opacity-50"
                         )}
                       >
                         <div className="flex flex-col items-center gap-2">
-                          <div className={cn("p-2 rounded-lg text-white", platform.color)}>
+                          <div
+                            className={cn(
+                              "p-2 rounded-lg text-white relative",
+                              platform.color
+                            )}
+                          >
                             <PlatformIcon className="h-5 w-5" />
+                            {connectingPlatform === platform.id && (
+                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                              </div>
+                            )}
                           </div>
                           <div className="text-center">
-                            <p className="font-semibold text-xs">{platform.name}</p>
+                            <p className="font-semibold text-xs">
+                              {platform.name}
+                            </p>
                             <p className="text-xs text-gray-600">
-                              {isConnected ? 'Connected' : 'Not connected'}
+                              {isConnected
+                                ? "Connected"
+                                : connectingPlatform === platform.id
+                                ? "Connecting..."
+                                : "Click to connect"}
                             </p>
                           </div>
                           {isConnected && (
@@ -190,7 +315,9 @@ export default function DashboardOverviewPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Recent Posts</CardTitle>
-                    <CardDescription>Your latest scheduled and published posts</CardDescription>
+                    <CardDescription>
+                      Your latest scheduled and published posts
+                    </CardDescription>
                   </div>
                   <Button variant="ghost" size="sm" asChild>
                     <Link href="/dashboard/posts">View All</Link>
@@ -209,7 +336,7 @@ export default function DashboardOverviewPage() {
                 ) : posts && posts.length > 0 ? (
                   <div className="space-y-3">
                     {posts.slice(0, 6).map((post: any) => (
-                      <div 
+                      <div
                         key={post.id}
                         className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all bg-white"
                       >
@@ -221,7 +348,9 @@ export default function DashboardOverviewPage() {
                             <div className="flex items-center gap-3 text-xs text-gray-600">
                               <div className="flex items-center gap-1">
                                 {post.platforms?.map((p: string) => {
-                                  const platform = platforms.find(pl => pl.id === p.toLowerCase());
+                                  const platform = platforms.find(
+                                    (pl) => pl.id === p.toLowerCase()
+                                  );
                                   if (!platform) return null;
                                   const Icon = platform.icon;
                                   return <Icon key={p} className="h-3 w-3" />;
@@ -230,18 +359,24 @@ export default function DashboardOverviewPage() {
                               {post.scheduled_for && (
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-3 w-3" />
-                                  {format(new Date(post.scheduled_for), 'MMM d, h:mm a')}
+                                  {format(
+                                    new Date(post.scheduled_for),
+                                    "MMM d, h:mm a"
+                                  )}
                                 </div>
                               )}
                             </div>
                           </div>
-                          <Badge 
+                          <Badge
                             variant="secondary"
                             className={cn(
                               "text-xs",
-                              post.status === 'posted' && "bg-green-100 text-green-800",
-                              post.status === 'scheduled' && "bg-blue-100 text-blue-800",
-                              post.status === 'failed' && "bg-red-100 text-red-800"
+                              post.status === "posted" &&
+                                "bg-green-100 text-green-800",
+                              post.status === "scheduled" &&
+                                "bg-blue-100 text-blue-800",
+                              post.status === "failed" &&
+                                "bg-red-100 text-red-800"
                             )}
                           >
                             {post.status}
@@ -256,7 +391,9 @@ export default function DashboardOverviewPage() {
                       <Calendar className="h-8 w-8 text-blue-600" />
                     </div>
                     <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-                    <p className="text-gray-600 mb-4">Create your first post to get started</p>
+                    <p className="text-gray-600 mb-4">
+                      Create your first post to get started
+                    </p>
                     <Button onClick={() => setShowCreateModal(true)}>
                       <Plus className="mr-2 h-4 w-4" />
                       Create Your First Post
@@ -269,7 +406,6 @@ export default function DashboardOverviewPage() {
 
           {/* Right Column - Engagement & Quick Actions */}
           <div className="space-y-6">
-            
             {/* Engagement Overview */}
             <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
               <CardHeader>
@@ -278,17 +414,37 @@ export default function DashboardOverviewPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {[
-                  { icon: Eye, label: 'Views', value: '12.5K', change: '+12%' },
-                  { icon: Heart, label: 'Likes', value: '8.7K', change: '+18%' },
-                  { icon: MessageCircle, label: 'Comments', value: '1.2K', change: '+7%' },
-                  { icon: Share2, label: 'Shares', value: '856', change: '+22%' }
+                  { icon: Eye, label: "Views", value: "12.5K", change: "+12%" },
+                  {
+                    icon: Heart,
+                    label: "Likes",
+                    value: "8.7K",
+                    change: "+18%",
+                  },
+                  {
+                    icon: MessageCircle,
+                    label: "Comments",
+                    value: "1.2K",
+                    change: "+7%",
+                  },
+                  {
+                    icon: Share2,
+                    label: "Shares",
+                    value: "856",
+                    change: "+22%",
+                  },
                 ].map((metric) => (
-                  <div key={metric.label} className="flex items-center justify-between">
+                  <div
+                    key={metric.label}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
                         <metric.icon className="h-4 w-4 text-blue-600" />
                       </div>
-                      <span className="text-sm font-medium">{metric.label}</span>
+                      <span className="text-sm font-medium">
+                        {metric.label}
+                      </span>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold">{metric.value}</p>
@@ -305,19 +461,31 @@ export default function DashboardOverviewPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <Link href="/dashboard/calendar">
                     <Calendar className="mr-2 h-4 w-4" />
                     View Calendar
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <Link href="/dashboard/analytics">
                     <BarChart3 className="mr-2 h-4 w-4" />
                     Analytics
                   </Link>
                 </Button>
-                <Button variant="outline" className="w-full justify-start" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  asChild
+                >
                   <Link href="/dashboard/templates">
                     <Sparkles className="mr-2 h-4 w-4" />
                     Templates
@@ -338,16 +506,19 @@ export default function DashboardOverviewPage() {
             </DialogHeader>
 
             <div className="space-y-6 py-4">
-              
               {/* Platform Selection */}
               <div>
-                <Label className="text-sm font-semibold mb-3 block">Select Platforms</Label>
+                <Label className="text-sm font-semibold mb-3 block">
+                  Select Platforms
+                </Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {platforms.map((platform) => {
-                    const isConnected = connectedPlatforms.includes(platform.id);
+                    const isConnected = connectedPlatforms.includes(
+                      platform.id
+                    );
                     const isSelected = selectedPlatforms.includes(platform.id);
                     const PlatformIcon = platform.icon;
-                    
+
                     return (
                       <button
                         key={platform.id}
@@ -356,18 +527,27 @@ export default function DashboardOverviewPage() {
                         className={cn(
                           "p-3 rounded-xl border-2 transition-all",
                           !isConnected && "opacity-50 cursor-not-allowed",
-                          isSelected 
-                            ? "border-blue-500 bg-blue-50" 
+                          isSelected
+                            ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
                         )}
                       >
                         <div className="flex flex-col items-center gap-2">
-                          <div className={cn("p-2 rounded-lg text-white", platform.color)}>
+                          <div
+                            className={cn(
+                              "p-2 rounded-lg text-white",
+                              platform.color
+                            )}
+                          >
                             <PlatformIcon className="h-5 w-5" />
                           </div>
-                          <span className="text-xs font-medium">{platform.name}</span>
+                          <span className="text-xs font-medium">
+                            {platform.name}
+                          </span>
                           {!isConnected && (
-                            <span className="text-xs text-red-600">Not connected</span>
+                            <span className="text-xs text-red-600">
+                              Not connected
+                            </span>
                           )}
                         </div>
                       </button>
@@ -400,32 +580,36 @@ export default function DashboardOverviewPage() {
                     )}
                   </Button>
                 </div>
-                
+
                 <Textarea
                   value={postContent}
                   onChange={(e) => setPostContent(e.target.value)}
                   placeholder="What's on your mind? Share your thoughts..."
                   className="min-h-[150px] resize-none"
                 />
-                
+
                 {/* Character Count */}
                 {selectedPlatforms.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedPlatforms.map(platformId => {
-                      const platform = platforms.find(p => p.id === platformId);
+                    {selectedPlatforms.map((platformId) => {
+                      const platform = platforms.find(
+                        (p) => p.id === platformId
+                      );
                       if (!platform) return null;
-                      
+
                       const isOver = postContent.length > platform.limit;
                       const isNear = postContent.length > platform.limit * 0.9;
-                      
+
                       return (
                         <div
                           key={platformId}
                           className={cn(
                             "text-xs px-3 py-1 rounded-full font-medium",
-                            isOver ? "bg-red-100 text-red-700" :
-                            isNear ? "bg-yellow-100 text-yellow-700" :
-                            "bg-gray-100 text-gray-600"
+                            isOver
+                              ? "bg-red-100 text-red-700"
+                              : isNear
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-gray-100 text-gray-600"
                           )}
                         >
                           {platform.name}: {postContent.length}/{platform.limit}
@@ -447,7 +631,9 @@ export default function DashboardOverviewPage() {
 
               {/* Media Upload */}
               <div>
-                <Label className="text-sm font-semibold mb-3 block">Add Media</Label>
+                <Label className="text-sm font-semibold mb-3 block">
+                  Add Media
+                </Label>
                 <div className="flex gap-2">
                   <label className="flex-1">
                     <input
@@ -467,18 +653,25 @@ export default function DashboardOverviewPage() {
                     <p className="text-sm text-gray-600">Record Audio</p>
                   </div>
                 </div>
-                
+
                 {uploadedImages.length > 0 && (
                   <div className="grid grid-cols-4 gap-2 mt-3">
                     {uploadedImages.map((img, idx) => (
-                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border">
-                        <img 
-                          src={URL.createObjectURL(img)} 
+                      <div
+                        key={idx}
+                        className="relative aspect-square rounded-lg overflow-hidden border"
+                      >
+                        <img
+                          src={URL.createObjectURL(img)}
                           alt={`Upload ${idx + 1}`}
                           className="w-full h-full object-cover"
                         />
-                        <button 
-                          onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+                        <button
+                          onClick={() =>
+                            setUploadedImages((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
                           className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
@@ -491,7 +684,9 @@ export default function DashboardOverviewPage() {
 
               {/* Schedule */}
               <div>
-                <Label className="text-sm font-semibold mb-3 block">Schedule (Optional)</Label>
+                <Label className="text-sm font-semibold mb-3 block">
+                  Schedule (Optional)
+                </Label>
                 <input
                   type="datetime-local"
                   value={scheduledDate}
@@ -510,11 +705,13 @@ export default function DashboardOverviewPage() {
                   Cancel
                 </Button>
                 <Button
-                  disabled={!postContent.trim() || selectedPlatforms.length === 0}
+                  disabled={
+                    !postContent.trim() || selectedPlatforms.length === 0
+                  }
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   <Send className="mr-2 h-4 w-4" />
-                  {scheduledDate ? 'Schedule Post' : 'Post Now'}
+                  {scheduledDate ? "Schedule Post" : "Post Now"}
                 </Button>
               </div>
             </div>

@@ -1,83 +1,137 @@
-// src/hooks/use-oauth.ts
-import { useState } from 'react';
-import { SocialPlatform, OAuthConfig, OAuthCallbackParams } from '@/types';
-import { SocialAPI } from '@/services/social-services';
+// src/hooks/api/use-oauth.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export function useOAuth() {
-  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
-  const [currentOAuthFlow, setCurrentOAuthFlow] = useState<{
-    platform: SocialPlatform | null;
-    config: OAuthConfig | null;
-  } | null>(null);
+  const queryClient = useQueryClient();
+  const popupRef = useRef<Window | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
 
-  const initiateOAuth = async (platform: SocialPlatform) => {
-    try {
-      setIsOAuthLoading(true);
-      const config = await SocialAPI.initiateOAuth(platform);
-      
-      setCurrentOAuthFlow({ platform, config });
-      
-      // Store the state in sessionStorage for callback verification
-      sessionStorage.setItem('oauth_state', config.state);
-      
-      // Open OAuth URL in new window
-      const popup = window.open(
-        config.auth_url,
-        'oauth_popup',
-        'width=500,height=600,scrollbars=yes,resizable=yes'
-      );
-      
-      if (!popup) {
-        throw new Error('Failed to open OAuth popup');
+  // Listen for OAuth messages from popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Security: Verify origin matches your backend
+      const allowedOrigin = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      if (!event.origin.includes(allowedOrigin.replace('http://', '').replace('https://', '').split(':')[0])) {
+        return;
       }
-      
-      // Listen for popup close
-      const checkClosed = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkClosed);
-          setIsOAuthLoading(false);
-          setCurrentOAuthFlow(null);
+
+      const { type, platform, username, error } = event.data;
+
+      if (type === 'OAUTH_SUCCESS') {
+        toast.success(`Successfully connected to ${platform}!${username ? ` (${username})` : ''}`);
+        
+        // Refresh connections list
+        queryClient.invalidateQueries({ queryKey: ['social-connections'] });
+        
+        // Clean up
+        setConnectingPlatform(null);
+        if (popupRef.current) {
+          popupRef.current = null;
         }
-      }, 1000);
-      
-    } catch (error:any) {
-      setIsOAuthLoading(false);
-      setCurrentOAuthFlow(null);
-      toast.error(error.message || 'Failed to initiate OAuth');
-    }
-  };
-
-  const handleOAuthCallback = async (
-    platform: SocialPlatform,
-    code: string,
-    state: string
-  ) => {
-    try {
-      const result = await SocialAPI.handleOAuthCallback(platform, code, state);
-      
-      if (result.success) {
-        toast.success(`Successfully connected to ${platform}!`);
-      } else {
-        toast.error(result.error || `Failed to connect to ${platform}`);
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+          checkIntervalRef.current = null;
+        }
+      } else if (type === 'OAUTH_ERROR') {
+        toast.error(`Failed to connect ${platform}: ${error}`);
+        
+        // Clean up
+        setConnectingPlatform(null);
+        if (popupRef.current) {
+          popupRef.current = null;
+        }
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+          checkIntervalRef.current = null;
+        }
       }
-      
-      // Clear OAuth flow state
-      setCurrentOAuthFlow(null);
-      setIsOAuthLoading(false);
-      
-      return result;
-    } catch (error) {
-      setCurrentOAuthFlow(null);
-      setIsOAuthLoading(false);
-      throw error;
+    };
+
+    window.addEventListener('message', handleMessage);
+    
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      // Cleanup on unmount
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, [queryClient]);
+
+  const initiateOAuthMutation = useMutation({
+    mutationFn: async (platform: string) => {
+      const response = await api.get(`/auth/oauth/${platform}/authorize`);
+      return response.data;
+    },
+    onMutate: (platform) => {
+      setConnectingPlatform(platform);
+    },
+    onSuccess: (data, platform) => {
+      if (data.auth_url) {
+        // Calculate popup position (center of screen)
+        const width = 600;
+        const height = 700;
+        const left = Math.max(0, (window.screen.width - width) / 2);
+        const top = Math.max(0, (window.screen.height - height) / 2);
+
+        // Close existing popup if any
+        if (popupRef.current && !popupRef.current.closed) {
+          popupRef.current.close();
+        }
+
+        // Open new popup
+        popupRef.current = window.open(
+          data.auth_url,
+          `oauth_${platform}`, // Unique name per platform
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+        );
+
+        if (!popupRef.current) {
+          toast.error('Please allow popups for this site to connect your account');
+          setConnectingPlatform(null);
+          return;
+        }
+
+        // Focus the popup
+        popupRef.current.focus();
+
+        // Clear existing interval
+        if (checkIntervalRef.current) {
+          clearInterval(checkIntervalRef.current);
+        }
+
+        // Monitor popup closure
+        checkIntervalRef.current = setInterval(() => {
+          if (popupRef.current && popupRef.current.closed) {
+            clearInterval(checkIntervalRef.current!);
+            checkIntervalRef.current = null;
+            popupRef.current = null;
+            
+            // Only show this if connection wasn't successful
+            // (success message is handled by postMessage)
+            setTimeout(() => {
+              if (connectingPlatform === platform) {
+                toast.success('OAuth window was closed');
+                setConnectingPlatform(null);
+              }
+            }, 500);
+          }
+        }, 500);
+      }
+    },
+    onError: (error: any, platform) => {
+      toast.error(error.response?.data?.detail || 'Failed to initiate OAuth');
+      setConnectingPlatform(null);
     }
-  };
+  });
 
   return {
-    isOAuthLoading,
-    currentOAuthFlow,
-    initiateOAuth,
-    handleOAuthCallback,
+    initiateOAuth: initiateOAuthMutation.mutateAsync,
+    isOAuthLoading: initiateOAuthMutation.isPending,
+    connectingPlatform
   };
 }

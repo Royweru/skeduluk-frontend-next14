@@ -75,16 +75,14 @@ interface PlatformConnectionCardProps {
 }
 
 export function PlatformConnectionCard({ connections }: PlatformConnectionCardProps) {
-  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
-  const {initiateOAuth, isOAuthLoading}= useOAuth();
-  const {awaitDisconnectAccount, isDisconnecting} = useSocialConnections();
+  const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
+  const { awaitDisconnectAccount, isDisconnecting } = useSocialConnections();
 
-  const handleConnect = async (platformId: string) => {
-    setConnectingPlatform(platformId);
+   const handleConnect = async (platformId: string) => {
     try {
-      await initiateOAuth(platformId as any);
+      await initiateOAuth(platformId);
     } catch (error) {
-      setConnectingPlatform(null);
+      // Error already handled in hook
     }
   };
 
@@ -97,6 +95,7 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
       // Error handled in mutation
     }
   };
+
 
   return (
     <div className="space-y-4">
@@ -115,7 +114,7 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
             (c: any) => c.platform.toLowerCase() === platform.id
           );
           const isConnected = !!connection;
-          const isConnecting = connectingPlatform === platform.id;
+          const isThisPlatformConnecting = connectingPlatform === platform.id;
           const PlatformIcon = platform.icon;
 
           return (
@@ -179,7 +178,7 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
                 )}
 
                 {/* Action Button */}
-                {isConnected ? (
+               {isConnected ? (
                   <Button
                     onClick={() => handleDisconnect(connection.id, platform.name)}
                     disabled={isDisconnecting}
@@ -201,13 +200,13 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
                 ) : (
                   <Button
                     onClick={() => handleConnect(platform.id)}
-                    disabled={isConnecting || isOAuthLoading}
+                    disabled={isThisPlatformConnecting || isOAuthLoading}
                     className={cn(
                       "w-full text-white font-semibold shadow-md hover:shadow-lg transition-all",
                       platform.bgColor
                     )}
                   >
-                    {isConnecting ? (
+                    {isThisPlatformConnecting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Connecting...
