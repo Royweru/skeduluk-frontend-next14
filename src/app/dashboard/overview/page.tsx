@@ -19,7 +19,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+   Tabs,
+    TabsContent,
+     TabsList,
+      TabsTrigger
+     } from "@/components/ui/tabs";
 import {
   Plus,
   Calendar,
