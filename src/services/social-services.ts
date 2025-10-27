@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export class SocialAPI {
   // Get user's social connections
-  static async getConnections(): Promise<SocialConnection[]> {
+ static async getConnections(): Promise<SocialConnection[]> {
     const response = await fetch(`${API_BASE_URL}/social/connections`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -13,10 +13,13 @@ export class SocialAPI {
     });
 
     if (!response.ok) {
+      console.log('Failed to fetch connections');
       throw new Error('Failed to fetch connections');
     }
 
-    return response.json();
+    const data = await response.json();
+    // Backend returns { connections: [...] }, extract the array
+    return data.connections || [];
   }
 
   // Initiate OAuth flow
@@ -34,28 +37,7 @@ export class SocialAPI {
     return response.json();
   }
 
-  // Handle OAuth callback
-  static async handleOAuthCallback(
-    platform: string,
-    code: string,
-    state: string
-  ): Promise<{ success: boolean; platform: string; connection_id?: number; error?: string }> {
-    const response = await fetch(`${API_BASE_URL}/auth/oauth/${platform}/callback`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-      },
-      body: JSON.stringify({ code, state }),
-    });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'OAuth callback failed');
-    }
-
-    return response.json();
-  }
 
   // Disconnect social account
   static async disconnectAccount(connectionId: number): Promise<void> {
