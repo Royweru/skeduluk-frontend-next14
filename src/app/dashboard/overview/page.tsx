@@ -40,7 +40,7 @@ export default function DashboardOverviewPage() {
     { id: 'linkedin', name: 'LinkedIn', icon: Linkedin, color: 'bg-blue-700', limit: 3000 },
     { id: 'instagram', name: 'Instagram', icon: Instagram, color: 'bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500', limit: 2200 },
     { id: 'tiktok', name: 'TikTok', icon: Music, color: 'bg-black', limit: 2200 },
-    { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600', limit: 5000 }
+    // { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600', limit: 5000 }
   ];
 
   const quickStats = [
