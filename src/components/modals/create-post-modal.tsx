@@ -1,14 +1,11 @@
-'use client'
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '@/lib/utils';
-import { ImageIcon, Video, Send, 
-  Sparkles, X, Zap, Calendar,
-   CheckCircle2, AlertCircle,
-    Upload, FileVideo,
-     Image as ImageIconLucide
-     } from 'lucide-react';
+import { ImageIcon, Video, Send, Sparkles, X, Zap, 
+  Calendar, CheckCircle2, AlertCircle, 
+  Upload, FileVideo, 
+  Image as ImageIconLucide } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
@@ -40,7 +37,7 @@ interface CreatePostModalProps {
   setScheduledDate: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const CreatePostModal = ({
+export const CreatePostModal = ({
   platforms,
   showCreateModal,
   setShowCreateModal,
@@ -204,7 +201,8 @@ const CreatePostModal = ({
     return (
       <div className="space-y-4">
         {/* Platform Header */}
-        <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-gray-50 to-gray-100 border">
+        <div className="flex items-center justify-between p-3 rounded-lg 
+        bg-gradient-to-r from-gray-50 to-gray-100 border">
           <div className="flex items-center gap-3">
             <div className={cn("p-2 rounded-lg text-white", platform.color)}>
               <PlatformIcon className="h-5 w-5" />
@@ -379,7 +377,8 @@ const CreatePostModal = ({
     <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r
+           from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Create New Post
           </DialogTitle>
         </DialogHeader>
@@ -391,7 +390,7 @@ const CreatePostModal = ({
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="flex-1 pr-4">
+          <div className="flex-1 overflow-y-auto pr-4">
             {/* COMPOSE TAB */}
             <TabsContent value="compose" className="space-y-6 mt-0">
               {/* Platform Selection */}
@@ -527,7 +526,8 @@ const CreatePostModal = ({
                         )}
 
                         {aiEnhanced && (
-                          <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200">
+                          <div className="mt-3 p-3 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 
+                          border border-purple-200">
                             <div className="flex items-center gap-2 text-sm text-purple-800">
                               <Zap className="h-4 w-4" />
                               <span className="font-medium">AI Enhanced ✨</span>
@@ -547,7 +547,8 @@ const CreatePostModal = ({
                           onDrop={handleDrop}
                           className={cn(
                             "border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer",
-                            dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
+                            dragActive ? "border-blue-500 bg-blue-50" :
+                             "border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
                           )}
                         >
                           <input
@@ -604,7 +605,8 @@ const CreatePostModal = ({
                     const media = getPlatformMedia(platformId);
 
                     return (
-                      <div key={platformId} className="p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 transition-all">
+                      <div key={platformId} className="p-4 rounded-lg border-2 border-gray-200
+                       hover:border-blue-300 transition-all">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-3">
                             <div className={cn("p-2 rounded-lg text-white", platform.color)}>
@@ -683,7 +685,7 @@ const CreatePostModal = ({
                 </div>
               </div>
             </TabsContent>
-          </ScrollArea>
+          </div>
         </Tabs>
 
         {/* Action Buttons */}
@@ -697,7 +699,8 @@ const CreatePostModal = ({
           </Button>
           <Button
             disabled={!postContent.trim() || selectedPlatforms.length === 0}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600
+             hover:from-blue-700 hover:to-purple-700"
           >
             <Send className="mr-2 h-4 w-4" />
             {scheduledDate ? 'Schedule Post' : 'Post Now'}
@@ -708,4 +711,3 @@ const CreatePostModal = ({
   );
 };
 
-export default CreatePostModal;

@@ -115,7 +115,8 @@ export default function DashboardOverviewPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600
+             bg-clip-text text-transparent">
               Welcome back, {user?.username}!
             </h1>
             <p className="text-gray-600 mt-1">Here's what's happening with your social presence</p>
@@ -132,7 +133,8 @@ export default function DashboardOverviewPage() {
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickStats.map((stat) => (
-            <Card key={stat.label} className="border-0 shadow-md hover:shadow-lg transition-shadow bg-white/80 backdrop-blur">
+            <Card key={stat.label} className="border-0 shadow-md hover:shadow-lg
+             transition-shadow bg-white/80 backdrop-blur">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -231,7 +233,8 @@ export default function DashboardOverviewPage() {
                     {posts.slice(0, 6).map((post: any) => (
                       <div 
                         key={post.id}
-                        className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all bg-white"
+                        className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 
+                        hover:shadow-md transition-all bg-white"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
