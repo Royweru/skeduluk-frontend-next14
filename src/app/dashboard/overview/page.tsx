@@ -18,8 +18,7 @@ import Link from 'next/link';
 import { useAuth } from '@/providers/auth-provider';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-import CreatePostModal from '@/components/modals/create-post-modal';
-
+import { CreatePostModal } from '@/components/modals/create-post-modal';
 export default function DashboardOverviewPage() {
   const { user } = useAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
