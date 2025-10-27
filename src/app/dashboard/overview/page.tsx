@@ -63,7 +63,9 @@ export default function DashboardOverviewPage() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
-  const connectedPlatforms =connections && connections?.map((c: any) => c.platform.toLowerCase()) || [];
+  const connectedPlatforms =
+    (connections && connections?.map((c: any) => c.platform.toLowerCase())) ||
+    [];
 
   const platforms = [
     {
@@ -274,58 +276,76 @@ export default function DashboardOverviewPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {platforms.map((platform) => {
-                    const isConnected = connectedPlatforms.includes(
-                      platform.id
-                    );
-                    const PlatformIcon = platform.icon;
+                  {/* Show loading skeletons when fetching connections */}
+                  {connectionsLoading
+                    ? // Loading state - show skeleton for each platform
+                      platforms.map((platform) => (
+                        <div
+                          key={platform.id}
+                          className="p-4 rounded-xl border-2 border-gray-200 bg-white animate-pulse"
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            {/* Icon skeleton */}
+                            <div className="w-10 h-10 bg-gray-300 rounded-lg" />
+                            {/* Text skeleton */}
+                            <div className="w-16 h-3 bg-gray-300 rounded" />
+                            <div className="w-20 h-2 bg-gray-200 rounded" />
+                          </div>
+                        </div>
+                      ))
+                    : // Actual content - show when loaded
+                      platforms.map((platform) => {
+                        const isConnected = connectedPlatforms.includes(
+                          platform.id
+                        );
+                        const PlatformIcon = platform.icon;
 
-                    return (
-                      <button
-                        key={platform.id}
-                        onClick={() => handlePlatformCardClick(platform.id)}
-                        disabled={isConnected || isOAuthLoading}
-                        className={cn(
-                          "p-4 rounded-xl border-2 transition-all text-left",
-                          isConnected
-                            ? "border-green-500 bg-green-50"
-                            : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer hover:shadow-md",
-                          connectingPlatform === platform.id && "opacity-50"
-                        )}
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <div
+                        return (
+                          <button
+                            key={platform.id}
+                            onClick={() => handlePlatformCardClick(platform.id)}
+                            disabled={isConnected || isOAuthLoading}
                             className={cn(
-                              "p-2 rounded-lg text-white relative",
-                              platform.color
+                              "p-4 rounded-xl border-2 transition-all",
+                              isConnected
+                                ? "border-green-500 bg-green-50"
+                                : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer hover:shadow-md",
+                              connectingPlatform === platform.id && "opacity-50"
                             )}
                           >
-                            <PlatformIcon className="h-5 w-5" />
-                            {connectingPlatform === platform.id && (
-                              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                                <Loader2 className="h-4 w-4 animate-spin text-white" />
+                            <div className="flex flex-col items-center gap-2">
+                              <div
+                                className={cn(
+                                  "p-2 rounded-lg text-white relative",
+                                  platform.color
+                                )}
+                              >
+                                <PlatformIcon className="h-5 w-5" />
+                                {connectingPlatform === platform.id && (
+                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
+                                    <Loader2 className="h-4 w-4 animate-spin text-white" />
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                          <div className="text-center">
-                            <p className="font-semibold text-xs">
-                              {platform.name}
-                            </p>
-                            <p className="text-xs text-gray-600">
-                              {isConnected
-                                ? "Connected"
-                                : connectingPlatform === platform.id
-                                ? "Connecting..."
-                                : "Click to connect"}
-                            </p>
-                          </div>
-                          {isConnected && (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
+                              <div className="text-center">
+                                <p className="font-semibold text-xs">
+                                  {platform.name}
+                                </p>
+                                <p className="text-xs text-gray-600">
+                                  {isConnected
+                                    ? "Connected"
+                                    : connectingPlatform === platform.id
+                                    ? "Connecting..."
+                                    : "Click to connect"}
+                                </p>
+                              </div>
+                              {isConnected && (
+                                <CheckCircle className="h-4 w-4 text-green-600" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
                 </div>
               </CardContent>
             </Card>
@@ -519,7 +539,7 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Create Post Modal */}
-        <CreatePostModal 
+        <CreatePostModal
           platforms={platforms}
           showCreateModal={showCreateModal}
           setShowCreateModal={setShowCreateModal}
