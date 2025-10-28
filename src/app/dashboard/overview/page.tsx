@@ -554,6 +554,7 @@ const {mutateAsync:enhanceMutation, isPending:isEnhancing} = useEnhanceContent()
         {/* Create Post Modal */}
         <CreatePostModal
           platforms={platforms}
+          aiEnhancements={aiEnhancements}
           showCreateModal={showCreateModal}
           setShowCreateModal={setShowCreateModal}
           connectedPlatforms={connectedPlatforms}

@@ -20,6 +20,7 @@ interface PlatformContent {
 
 interface CreatePostModalProps {
   platforms: any[];
+  aiEnhancements:any[];
   showCreateModal: boolean;
   setShowCreateModal: React.Dispatch<React.SetStateAction<boolean>>;
   connectedPlatforms: any[];
@@ -54,6 +55,7 @@ export const CreatePostModal = ({
   handleImageUpload,
   scheduledDate,
   setScheduledDate,
+  aiEnhancements
 }: CreatePostModalProps) => {
   const [activeTab, setActiveTab] = useState('compose');
   const [platformSpecific, setPlatformSpecific] = useState<Record<string, PlatformContent>>({});
@@ -534,8 +536,43 @@ export const CreatePostModal = ({
                             </div>
                           </div>
                         )}
+                        {/* AI Enhanced Content Preview */}
+                              {aiEnhancements.length > 0 && (
+                                <div className="rounded-xl p-4 bg-gradient-to-r from-purple-50 via-blue-50 to-indigo-50 border-2 border-purple-200">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                      <div className="p-2 bg-white rounded-lg shadow-sm">
+                                        <Zap className="h-4 w-4 text-purple-600" />
+                                      </div>
+                                      <span className="font-semibold text-purple-900">AI Enhanced Versions</span>
+                                    </div>
+                              
+                                  </div>
+                                  
+                                  <div className="space-y-3">
+                                    {aiEnhancements.map((enhancement: any) => {
+                                      const platform = platforms.find(p => p.id === enhancement.platform.toLowerCase());
+                                      return (
+                                        <div key={enhancement.platform} className="bg-white rounded-lg p-3 shadow-sm border border-purple-100">
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <Badge variant="secondary" className="text-xs">
+                                              {platform?.name || enhancement.platform}
+                                            </Badge>
+                                            <span className="text-xs text-gray-500">
+                                              {enhancement.enhanced_content?.length || 0} characters
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-gray-700 leading-relaxed">
+                                            {enhancement.enhanced_content}
+                                          </p>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
                       </div>
-
+  
                       {/* Media Upload */}
                       <div>
                         <Label className="text-sm font-semibold mb-3 block">Media</Label>
