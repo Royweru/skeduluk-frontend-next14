@@ -40,7 +40,7 @@ import {
   Youtube,
   Loader2,
 } from "lucide-react";
-import { usePosts } from "@/hooks/api/use-posts";
+import { useEnhanceContent, usePosts } from "@/hooks/api/use-posts";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -54,13 +54,14 @@ export default function DashboardOverviewPage() {
   const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-
+const {mutateAsync:enhanceMutation, isPending:isEnhancing} = useEnhanceContent();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [isEnhancing, setIsEnhancing] = useState(false);
+  
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [scheduledDate, setScheduledDate] = useState("");
+    const [aiEnhancements, setAiEnhancements] = useState<any[]>([]);
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
   const connectedPlatforms =
@@ -167,13 +168,25 @@ export default function DashboardOverviewPage() {
     }
   }, []); // Run once on mount
 
-  const handleEnhanceContent = async () => {
-    setIsEnhancing(true);
-    // Simulate AI enhancement
-    setTimeout(() => {
+ const handleEnhanceContent = async () => {
+    if (!postContent.trim() || selectedPlatforms.length === 0) {
+      toast.error('Add content and select platforms');
+      return;
+    }
+
+    try {
+      const result = await enhanceMutation({
+        content:postContent,
+        platforms: selectedPlatforms,
+        image_count: uploadedImages.length
+      });
+      
+      setAiEnhancements(result.enhancements);
       setAiEnhanced(true);
-      setIsEnhancing(false);
-    }, 2000);
+      toast.success('Content enhanced!');
+    } catch (error) {
+      // Error handled in mutation
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
