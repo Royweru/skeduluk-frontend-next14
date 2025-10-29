@@ -143,7 +143,7 @@ export const postsApi = {
   
   // Get available AI providers status
   getAIProviders: async (): Promise<AIProvidersInfo> => {
-    const response = await api.get('/posts/ai-providers');
+    const response = await api.get('/posts/ai-providers/info');
     return response.data;
   },
   testAIproviders: async () => {
