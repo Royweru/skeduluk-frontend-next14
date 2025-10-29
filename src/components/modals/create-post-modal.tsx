@@ -86,7 +86,13 @@ export const CreatePostModal = ({
   const hasAIProvider = aiProviders && Object.values(aiProviders).some(
     (value, index) => index < 5 && value === true
   );
-  console.log("Available AI Providers:", availableAIProviders);
+ 
+  useEffect(() => {
+     if(availableAIProviders){
+      console.log('Available AI Providers:', availableAIProviders);
+     }
+  }, [availableAIProviders]);
+  
   // Initialize platform-specific content
   useEffect(() => {
     const initialContent: Record<string, PlatformContent> = {};
