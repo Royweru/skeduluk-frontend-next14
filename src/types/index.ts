@@ -1,4 +1,3 @@
-// src/types/index.ts
 
 // ==================== USER & AUTHENTICATION ====================
 
@@ -180,6 +179,42 @@ export interface PlatformLimits {
   maxLength: number;
   maxImages: number;
   supportedMediaTypes: string[];
+}
+
+
+export interface EnhancementRequest {
+  content: string;
+  platforms: string[];
+  image_count?: number;
+  tone?: string;
+}
+
+export interface PlatformEnhancement {
+  platform: string;
+  enhanced_content: string;
+}
+
+export interface EnhancementResponse {
+  enhancements: PlatformEnhancement[];
+}
+
+export interface AIProvidersInfo {
+  groq: boolean;
+  gemini: boolean;
+  openai: boolean;
+  anthropic: boolean;
+  grok: boolean;
+  configured_provider: string;
+}
+
+export interface HashtagsResponse {
+  hashtags: string[];
+}
+
+export interface PostTimeResponse {
+  platform: string;
+  day: string;
+  time: string;
 }
 
 // ==================== SUBSCRIPTIONSIONS & BILLING ====================

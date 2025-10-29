@@ -1,4 +1,5 @@
 // src/lib/api.ts
+import { AIProvidersInfo, EnhancementRequest, EnhancementResponse, PostTimeResponse } from '@/types';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -77,16 +78,23 @@ export const authApi = {
 };
 
 export const postsApi = {
+  // ========================================
+  // Posts CRUD Operations
+  // ========================================
+  
+  // Get all posts with optional filters
   getPosts: async (params?: { skip?: number; limit?: number; status?: string }) => {
-    const response = await api.get(`/posts`, { params });
+    const response = await api.get('/posts', { params });
     return response.data;
   },
   
+  // Get single post by ID
   getPost: async (id: number) => {
     const response = await api.get(`/posts/${id}`);
     return response.data;
   },
   
+  // Create new post with images/videos
   createPost: async (formData: FormData) => {
     const response = await api.post('/posts', formData, {
       headers: {
@@ -96,21 +104,62 @@ export const postsApi = {
     return response.data;
   },
   
+  // Update existing post
   updatePost: async (id: number, postData: any) => {
     const response = await api.put(`/posts/${id}`, postData);
     return response.data;
   },
   
+  // Publish a post immediately
   publishPost: async (id: number) => {
     const response = await api.post(`/posts/${id}/publish`);
     return response.data;
   },
   
-  enhanceContent: async (data: { content: string; platforms: string[]; image_count?: number; tone?: string }) => {
+  // Delete a post
+  deletePost: async (id: number) => {
+    const response = await api.delete(`/posts/${id}`);
+    return response.data;
+  },
+  
+  // ========================================
+  // AI-Powered Features
+  // ========================================
+  
+  // Enhance content for multiple platforms with AI
+  enhanceContent: async (data: EnhancementRequest): Promise<EnhancementResponse> => {
     const response = await api.post('/posts/enhance', data);
     return response.data;
   },
   
+  // Generate relevant hashtags using AI
+  generateHashtags: async (content: string, count: number = 5): Promise<string[]> => {
+    const response = await api.post('/posts/generate-hashtags', { 
+      content, 
+      count 
+    });
+    return response.data.hashtags;
+  },
+  
+  // Get available AI providers status
+  getAIProviders: async (): Promise<AIProvidersInfo> => {
+    const response = await api.get('/posts/ai-providers');
+    return response.data;
+  },
+  
+  // Get optimal posting time for a platform
+  suggestPostTime: async (platform: string): Promise<PostTimeResponse> => {
+    const response = await api.get('/posts/suggest-post-time', {
+      params: { platform }
+    });
+    return response.data;
+  },
+  
+  // ========================================
+  // Media & Content Features
+  // ========================================
+  
+  // Transcribe audio to text
   transcribeAudio: async (audioFile: File) => {
     const formData = new FormData();
     formData.append('audio', audioFile);
@@ -123,9 +172,90 @@ export const postsApi = {
     return response.data;
   },
   
+  // ========================================
+  // Calendar & Scheduling
+  // ========================================
+  
+  // Get calendar events for date range
   getCalendarEvents: async (startDate: string, endDate: string) => {
     const response = await api.get('/posts/calendar/events', {
-      params: { start_date: startDate, end_date: endDate }
+      params: { 
+        start_date: startDate, 
+        end_date: endDate 
+      }
+    });
+    return response.data;
+  },
+  
+  // ========================================
+  // Analytics & Performance
+  // ========================================
+  
+  // Get analytics for a specific post
+  getPostAnalytics: async (id: number) => {
+    const response = await api.get(`/posts/${id}/analytics`);
+    return response.data;
+  },
+  
+  // Get overview analytics
+  getOverviewAnalytics: async () => {
+    const response = await api.get('/posts/analytics/overview');
+    return response.data;
+  },
+  
+  // ========================================
+  // Filtering & Search
+  // ========================================
+  
+  // Get posts by status
+  getPostsByStatus: async (status: 'draft' | 'scheduled' | 'published' | 'failed') => {
+    const response = await api.get('/posts', {
+      params: { status }
+    });
+    return response.data;
+  },
+  
+  // Get posts by platform
+  getPostsByPlatform: async (platform: string) => {
+    const response = await api.get('/posts', {
+      params: { platform }
+    });
+    return response.data;
+  },
+  
+  // Search posts
+  searchPosts: async (query: string) => {
+    const response = await api.get('/posts/search', {
+      params: { q: query }
+    });
+    return response.data;
+  },
+  
+  // ========================================
+  // Batch Operations
+  // ========================================
+  
+  // Delete multiple posts
+  batchDelete: async (postIds: number[]) => {
+    const response = await api.post('/posts/batch/delete', {
+      post_ids: postIds
+    });
+    return response.data;
+  },
+  
+  // Publish multiple posts
+  batchPublish: async (postIds: number[]) => {
+    const response = await api.post('/posts/batch/publish', {
+      post_ids: postIds
+    });
+    return response.data;
+  },
+  
+  // Reschedule multiple posts
+  batchReschedule: async (postIds: number[], newDate: string) => {
+    const response = await api.post('/posts/batch/reschedule', {
+      post_ids: postIds,
+      scheduled_for: newDate
     });
     return response.data;
   },

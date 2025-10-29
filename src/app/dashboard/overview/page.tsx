@@ -40,7 +40,7 @@ import {
   Youtube,
   Loader2,
 } from "lucide-react";
-import { useEnhanceContent, usePosts } from "@/hooks/api/use-posts";
+import { useAIProviders, useEnhanceContent, usePosts } from "@/hooks/api/use-posts";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -54,13 +54,16 @@ export default function DashboardOverviewPage() {
   const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-const {mutateAsync:enhanceMutation, isPending:isEnhancing} = useEnhanceContent();
+   const enhanceMutation = useEnhanceContent();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [scheduledDate, setScheduledDate] = useState("");
+   const [quickEnhanceMode, setQuickEnhanceMode] = useState(false);
+   const { data: aiProviders } = useAIProviders();
     const [aiEnhancements, setAiEnhancements] = useState<any[]>([]);
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
@@ -167,41 +170,80 @@ const {mutateAsync:enhanceMutation, isPending:isEnhancing} = useEnhanceContent()
       window.history.replaceState({}, "", "/dashboard/overview");
     }
   }, []); // Run once on mount
+const hasAIProvider = aiProviders && Object.values(aiProviders).some(
+    (value, index) => index < 5 && value === true
+  );
 
- const handleEnhanceContent = async () => {
-    if (!postContent.trim() || selectedPlatforms.length === 0) {
-      toast.error('Add content and select platforms');
+
+
+// Toggle platform selection
+  const togglePlatform = (platformId: string) => {
+    if (!connectedPlatforms.includes(platformId)) {
+      toast.error(`${platforms.find(p => p.id === platformId)?.name} is not connected`);
+      return;
+    }
+    
+    setSelectedPlatforms(prev =>
+      prev.includes(platformId)
+        ? prev.filter(p => p !== platformId)
+        : [...prev, platformId]
+    );
+  };
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newImages = Array.from(e.target.files);
+      
+      // Validate file size (max 10MB)
+      const validImages = newImages.filter(img => {
+        if (img.size > 10 * 1024 * 1024) {
+          toast.error(`${img.name} is too large. Max 10MB per file.`);
+          return false;
+        }
+        return true;
+      });
+      
+      setUploadedImages(prev => [...prev, ...validImages]);
+      
+      if (validImages.length > 0) {
+        toast.success(`${validImages.length} image(s) uploaded`);
+      }
+    }
+  };
+
+  // Quick enhance content
+  const handleQuickEnhance = async () => {
+    if (!postContent.trim()) {
+      toast.error('Please write some content first');
       return;
     }
 
+    if (selectedPlatforms.length === 0) {
+      toast.error('Please select at least one platform');
+      return;
+    }
+
+    setQuickEnhanceMode(true);
+
     try {
-      const result = await enhanceMutation({
-        content:postContent,
+      const result = await enhanceMutation.mutateAsync({
+        content: postContent,
         platforms: selectedPlatforms,
-        image_count: uploadedImages.length
+        image_count: uploadedImages.length,
+        tone: 'engaging'
       });
-      
-      setAiEnhancements(result.enhancements);
-      setAiEnhanced(true);
-      toast.success('Content enhanced!');
+
+      // Use first enhancement as default
+      if (result.enhancements.length > 0) {
+        setPostContent(result.enhancements[0].enhanced_content);
+        toast.success('✨ Content enhanced!');
+      }
     } catch (error) {
       // Error handled in mutation
+    } finally {
+      setQuickEnhanceMode(false);
     }
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setUploadedImages([...uploadedImages, ...Array.from(e.target.files)]);
-    }
-  };
-
-  const togglePlatform = (platformId: string) => {
-    if (!connectedPlatforms.includes(platformId)) return;
-    setSelectedPlatforms((prev) =>
-      prev.includes(platformId)
-        ? prev.filter((p) => p !== platformId)
-        : [...prev, platformId]
-    );
   };
   const handlePlatformCardClick = async (platformId: string) => {
     const isConnected = connectedPlatforms.includes(platformId);
@@ -553,35 +595,31 @@ const {mutateAsync:enhanceMutation, isPending:isEnhancing} = useEnhanceContent()
 
         {/* Create Post Modal */}
         <CreatePostModal
-          platforms={platforms}
-          aiEnhancements={aiEnhancements}
-          showCreateModal={showCreateModal}
-          setShowCreateModal={setShowCreateModal}
-          connectedPlatforms={connectedPlatforms}
-          selectedPlatforms={selectedPlatforms}
-          togglePlatform={togglePlatform}
-          postContent={postContent}
-          setPostContent={setPostContent}
-          aiEnhanced={aiEnhanced}
-          isEnhancing={isEnhancing}
-          handleEnhanceContent={handleEnhanceContent}
-          uploadedImages={uploadedImages}
-          setUploadedImages={setUploadedImages}
-          handleImageUpload={handleImageUpload}
-          scheduledDate={scheduledDate}
-          setScheduledDate={setScheduledDate}
-        />
+        platforms={platforms}
+        setSelectedPlatforms={setSelectedPlatforms}
+        showCreateModal={showCreateModal}
+        setShowCreateModal={setShowCreateModal}
+        connectedPlatforms={connectedPlatforms}
+        selectedPlatforms={selectedPlatforms}
+        togglePlatform={togglePlatform}
+        postContent={postContent}
+        setPostContent={setPostContent}
+        uploadedImages={uploadedImages}
+        setUploadedImages={setUploadedImages}
+        handleImageUpload={handleImageUpload}
+        scheduledDate={scheduledDate}
+        setScheduledDate={setScheduledDate}
+        onPostCreated={() => {
+          setShowCreateModal(false);
+          setPostContent('');
+          setSelectedPlatforms([]);
+          setUploadedImages([]);
+          setScheduledDate('');
+        }}
+      />
       </div>
     </div>
   );
 }
 
-// import React from 'react'
 
-// const DashboardOverviewPage = () => {
-//   return (
-//     <div>DashboardOverviewPage</div>
-//   )
-// }
-
-// export default DashboardOverviewPage
