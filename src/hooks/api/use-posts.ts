@@ -96,6 +96,14 @@ export function useAIProviders() {
     retry: 1,
   });
 }
+export function useTestAIProviders() {
+  return useQuery({
+    queryKey: ['test-ai-providers'],
+    queryFn: postsApi.testAIproviders,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 1,
+  });
+}
 
 // Transcribe Audio Hook
 export function useTranscribeAudio() {

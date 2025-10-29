@@ -146,7 +146,10 @@ export const postsApi = {
     const response = await api.get('/posts/ai-providers');
     return response.data;
   },
-  
+  testAIproviders: async () => {
+    const res = await api.get('/posts/ai-providers/debug');
+    return res.data;
+  },
   // Get optimal posting time for a platform
   suggestPostTime: async (platform: string): Promise<PostTimeResponse> => {
     const response = await api.get('/posts/suggest-post-time', {

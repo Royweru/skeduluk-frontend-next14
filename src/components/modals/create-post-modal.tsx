@@ -14,7 +14,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
-import { useEnhanceContent, useGenerateHashtags, useAIProviders, useCreatePost } from '@/hooks/api/use-posts';
+import { useEnhanceContent, useGenerateHashtags, useAIProviders, useCreatePost, useTestAIProviders } from '@/hooks/api/use-posts';
 import toast from 'react-hot-toast';
 
 interface PlatformContent {
@@ -76,7 +76,7 @@ export const CreatePostModal = ({
   const [selectedEnhancement, setSelectedEnhancement] = useState<string | null>(null);
   const [generatedHashtags, setGeneratedHashtags] = useState<string[]>([]);
   const [showToneSelector, setShowToneSelector] = useState(false);
-
+  const {data:availableAIProviders} = useTestAIProviders();
   // Hooks
   const createPostMutation = useCreatePost();
   const enhanceMutation = useEnhanceContent();
@@ -86,7 +86,7 @@ export const CreatePostModal = ({
   const hasAIProvider = aiProviders && Object.values(aiProviders).some(
     (value, index) => index < 5 && value === true
   );
-
+  console.log("Available AI Providers:", availableAIProviders);
   // Initialize platform-specific content
   useEffect(() => {
     const initialContent: Record<string, PlatformContent> = {};
