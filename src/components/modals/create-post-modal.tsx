@@ -7,14 +7,14 @@ import {
   Calendar, CheckCircle2, AlertCircle, 
   Upload, FileVideo, Hash, TrendingUp,
   Image as ImageIconLucide, Wand2, Copy,
-  ChevronDown, ChevronUp, Lightbulb, Clock
+  ChevronDown, ChevronUp, Lightbulb, Clock, Loader2
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
-import { useEnhanceContent, useGenerateHashtags, useAIProviders, useCreatePost, useTestAIProviders } from '@/hooks/api/use-posts';
+import { useEnhanceContent, useGenerateHashtags, useAIProviders, useCreatePost } from '@/hooks/api/use-posts';
 import toast from 'react-hot-toast';
 
 interface PlatformContent {
@@ -58,9 +58,9 @@ export const CreatePostModal = ({
   togglePlatform,
   postContent,
   setPostContent,
+  setSelectedPlatforms,
   uploadedImages,
   setUploadedImages,
-  setSelectedPlatforms,
   handleImageUpload,
   scheduledDate,
   setScheduledDate,
@@ -76,7 +76,7 @@ export const CreatePostModal = ({
   const [selectedEnhancement, setSelectedEnhancement] = useState<string | null>(null);
   const [generatedHashtags, setGeneratedHashtags] = useState<string[]>([]);
   const [showToneSelector, setShowToneSelector] = useState(false);
-  const {data:availableAIProviders} = useTestAIProviders();
+
   // Hooks
   const createPostMutation = useCreatePost();
   const enhanceMutation = useEnhanceContent();
@@ -87,7 +87,6 @@ export const CreatePostModal = ({
     (value, index) => index < 5 && value === true
   );
 
-  
   // Initialize platform-specific content
   useEffect(() => {
     const initialContent: Record<string, PlatformContent> = {};
@@ -1155,12 +1154,21 @@ export const CreatePostModal = ({
             Cancel
           </Button>
           <Button
-            disabled={!postContent.trim() || selectedPlatforms.length === 0}
+            disabled={!postContent.trim() || selectedPlatforms.length === 0 || createPostMutation.isPending}
             className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
-            onClick={onPostCreated}
+            onClick={handleSubmitPost}
           >
-            <Send className="mr-2 h-4 w-4" />
-            {scheduledDate ? 'Schedule Post' : 'Publish Now'}
+            {createPostMutation.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {scheduledDate ? 'Scheduling...' : 'Publishing...'}
+              </>
+            ) : (
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                {scheduledDate ? 'Schedule Post' : 'Publish Now'}
+              </>
+            )}
           </Button>
         </div>
       </DialogContent>

@@ -78,11 +78,6 @@ export const authApi = {
 };
 
 export const postsApi = {
-  // ========================================
-  // Posts CRUD Operations
-  // ========================================
-  
-  // Get all posts with optional filters
   getPosts: async (params?: { skip?: number; limit?: number; status?: string }) => {
     const response = await api.get('/posts', { params });
     return response.data;

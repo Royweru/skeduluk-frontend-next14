@@ -40,7 +40,11 @@ import {
   Youtube,
   Loader2,
 } from "lucide-react";
-import { useAIProviders, useEnhanceContent, usePosts } from "@/hooks/api/use-posts";
+import {
+  useAIProviders,
+  useEnhanceContent,
+  usePosts,
+} from "@/hooks/api/use-posts";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
 import { format } from "date-fns";
 import Link from "next/link";
@@ -49,27 +53,40 @@ import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { CreatePostModal } from "@/components/modals/create-post-modal";
 import { useOAuth } from "@/hooks/api/use-oauth";
+import { usePostStatusPolling } from "@/hooks/api/use-post-status";
+import { useQueryClient } from "@tanstack/react-query";
 export default function DashboardOverviewPage() {
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-   const enhanceMutation = useEnhanceContent();
+  const enhanceMutation = useEnhanceContent();
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [postContent, setPostContent] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  
+  const [publishingPostId, setPublishingPostId] = useState<number | null>(null);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [scheduledDate, setScheduledDate] = useState("");
-   const [quickEnhanceMode, setQuickEnhanceMode] = useState(false);
-   const { data: aiProviders } = useAIProviders();
-    const [aiEnhancements, setAiEnhancements] = useState<any[]>([]);
+  const [quickEnhanceMode, setQuickEnhanceMode] = useState(false);
+  const { data: aiProviders } = useAIProviders();
+  const [aiEnhancements, setAiEnhancements] = useState<any[]>([]);
   const [aiEnhanced, setAiEnhanced] = useState(false);
 
   const connectedPlatforms =
     (connections && connections?.map((c: any) => c.platform.toLowerCase())) ||
     [];
+
+  // Add the polling hook
+  const {
+    status: publishingStatus,
+    results: publishingResults,
+    isPosting,
+    isComplete,
+  } = usePostStatusPolling(publishingPostId, !!publishingPostId);
 
   const platforms = [
     {
@@ -170,22 +187,45 @@ export default function DashboardOverviewPage() {
       window.history.replaceState({}, "", "/dashboard/overview");
     }
   }, []); // Run once on mount
-const hasAIProvider = aiProviders && Object.values(aiProviders).some(
-    (value, index) => index < 5 && value === true
-  );
+  const hasAIProvider =
+    aiProviders &&
+    Object.values(aiProviders).some(
+      (value, index) => index < 5 && value === true
+    );
 
+  useEffect(() => {
+    if (isComplete && publishingPostId) {
+      // Refresh posts list
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
 
+      // Show success animation
+      if (publishingStatus === "posted") {
+        setShowSuccessAnimation(true);
+        setTimeout(() => {
+          setShowSuccessAnimation(false);
+          setPublishingPostId(null);
+        }, 3000);
+      } else {
+        // Clear publishing state after a delay for failed/partial
+        setTimeout(() => {
+          setPublishingPostId(null);
+        }, 2000);
+      }
+    }
+  }, [isComplete, publishingPostId, publishingStatus]);
 
-// Toggle platform selection
+  // Toggle platform selection
   const togglePlatform = (platformId: string) => {
     if (!connectedPlatforms.includes(platformId)) {
-      toast.error(`${platforms.find(p => p.id === platformId)?.name} is not connected`);
+      toast.error(
+        `${platforms.find((p) => p.id === platformId)?.name} is not connected`
+      );
       return;
     }
-    
-    setSelectedPlatforms(prev =>
+
+    setSelectedPlatforms((prev) =>
       prev.includes(platformId)
-        ? prev.filter(p => p !== platformId)
+        ? prev.filter((p) => p !== platformId)
         : [...prev, platformId]
     );
   };
@@ -194,18 +234,18 @@ const hasAIProvider = aiProviders && Object.values(aiProviders).some(
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newImages = Array.from(e.target.files);
-      
+
       // Validate file size (max 10MB)
-      const validImages = newImages.filter(img => {
+      const validImages = newImages.filter((img) => {
         if (img.size > 10 * 1024 * 1024) {
           toast.error(`${img.name} is too large. Max 10MB per file.`);
           return false;
         }
         return true;
       });
-      
-      setUploadedImages(prev => [...prev, ...validImages]);
-      
+
+      setUploadedImages((prev) => [...prev, ...validImages]);
+
       if (validImages.length > 0) {
         toast.success(`${validImages.length} image(s) uploaded`);
       }
@@ -215,12 +255,12 @@ const hasAIProvider = aiProviders && Object.values(aiProviders).some(
   // Quick enhance content
   const handleQuickEnhance = async () => {
     if (!postContent.trim()) {
-      toast.error('Please write some content first');
+      toast.error("Please write some content first");
       return;
     }
 
     if (selectedPlatforms.length === 0) {
-      toast.error('Please select at least one platform');
+      toast.error("Please select at least one platform");
       return;
     }
 
@@ -231,13 +271,13 @@ const hasAIProvider = aiProviders && Object.values(aiProviders).some(
         content: postContent,
         platforms: selectedPlatforms,
         image_count: uploadedImages.length,
-        tone: 'engaging'
+        tone: "engaging",
       });
 
       // Use first enhancement as default
       if (result.enhancements.length > 0) {
         setPostContent(result.enhancements[0].enhanced_content);
-        toast.success('✨ Content enhanced!');
+        toast.success("✨ Content enhanced!");
       }
     } catch (error) {
       // Error handled in mutation
@@ -595,31 +635,53 @@ const hasAIProvider = aiProviders && Object.values(aiProviders).some(
 
         {/* Create Post Modal */}
         <CreatePostModal
-        platforms={platforms}
-        setSelectedPlatforms={setSelectedPlatforms}
-        showCreateModal={showCreateModal}
-        setShowCreateModal={setShowCreateModal}
-        connectedPlatforms={connectedPlatforms}
-        selectedPlatforms={selectedPlatforms}
-        togglePlatform={togglePlatform}
-        postContent={postContent}
-        setPostContent={setPostContent}
-        uploadedImages={uploadedImages}
-        setUploadedImages={setUploadedImages}
-        handleImageUpload={handleImageUpload}
-        scheduledDate={scheduledDate}
-        setScheduledDate={setScheduledDate}
-        onPostCreated={() => {
-          setShowCreateModal(false);
-          setPostContent('');
-          setSelectedPlatforms([]);
-          setUploadedImages([]);
-          setScheduledDate('');
-        }}
-      />
+          platforms={platforms}
+          setSelectedPlatforms={setSelectedPlatforms}
+          showCreateModal={showCreateModal}
+          setShowCreateModal={setShowCreateModal}
+          connectedPlatforms={connectedPlatforms}
+          selectedPlatforms={selectedPlatforms}
+          togglePlatform={togglePlatform}
+          postContent={postContent}
+          setPostContent={setPostContent}
+          uploadedImages={uploadedImages}
+          setUploadedImages={setUploadedImages}
+          handleImageUpload={handleImageUpload}
+          scheduledDate={scheduledDate}
+          setScheduledDate={setScheduledDate}
+          onPostCreated={(createdPost) => {
+            setShowCreateModal(false);
+            setPostContent("");
+            setSelectedPlatforms([]);
+            setUploadedImages([]);
+            setScheduledDate("");
+
+            // If post is being published immediately, start polling
+            if (!scheduledDate && createdPost?.id) {
+              setPublishingPostId(createdPost.id);
+
+              // Show initial toast
+              toast.loading(
+                `Publishing to ${
+                  createdPost.platforms?.length || 0
+                } platform(s)...`,
+                {
+                  id: "publishing-post",
+                  duration: Infinity,
+                }
+              );
+
+              // Dismiss after a delays
+              setTimeout(() => {
+                toast.dismiss("publishing-post");
+              }, 10000);
+            } else if (scheduledDate) {
+              // Just show scheduled confirmation
+              toast.success(`Post scheduled successfully!`);
+            }
+          }}
+        />
       </div>
     </div>
   );
 }
-
-
