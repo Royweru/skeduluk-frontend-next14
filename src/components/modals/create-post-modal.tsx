@@ -38,7 +38,7 @@ interface CreatePostModalProps {
   handleImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   scheduledDate: string;
   setScheduledDate: React.Dispatch<React.SetStateAction<string>>;
-  onPostCreated?: () => void;
+  onPostCreated?: (createdPost?: any) => void;
 }
 
 const TONES = [
@@ -53,12 +53,12 @@ export const CreatePostModal = ({
   platforms,
   showCreateModal,
   setShowCreateModal,
+  setSelectedPlatforms,
   connectedPlatforms,
   selectedPlatforms,
   togglePlatform,
   postContent,
   setPostContent,
-  setSelectedPlatforms,
   uploadedImages,
   setUploadedImages,
   handleImageUpload,
@@ -264,6 +264,8 @@ export const CreatePostModal = ({
 
       await createPostMutation.mutateAsync(formData);
 
+      const createdPost = await createPostMutation.mutateAsync(formData);
+
       // Success - reset form
       setPostContent('');
       setSelectedPlatforms([]);
@@ -277,8 +279,8 @@ export const CreatePostModal = ({
       setCustomizePerPlatform(false);
       setShowCreateModal(false);
 
-      // Call parent callback
-      onPostCreated?.();
+      // Call parent callback with created post data
+      onPostCreated?.(createdPost);
     } catch (error: any) {
       // Error already handled by mutation
       console.error('Post creation error:', error);

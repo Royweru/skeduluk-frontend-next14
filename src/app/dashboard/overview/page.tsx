@@ -649,7 +649,7 @@ export default function DashboardOverviewPage() {
           handleImageUpload={handleImageUpload}
           scheduledDate={scheduledDate}
           setScheduledDate={setScheduledDate}
-          onPostCreated={(createdPost) => {
+          onPostCreated={(createdPost:any) => {
             setShowCreateModal(false);
             setPostContent("");
             setSelectedPlatforms([]);
