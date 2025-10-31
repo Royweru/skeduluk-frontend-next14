@@ -152,15 +152,16 @@ export function useUpdatePost() {
   });
 }
 
-// Publish Post Hook
+// Hook to publish a post immediately
 export function usePublishPost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: postsApi.publishPost,
+    mutationFn: (postId: number) => postsApi.publishPostNow(postId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success('🚀 Post published successfully!');
+      toast.success('Post is being published');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to publish post');
@@ -168,14 +169,6 @@ export function usePublishPost() {
   });
 }
 
-// Get Calendar Events Hook
-export function useCalendarEvents(startDate: string, endDate: string) {
-  return useQuery({
-    queryKey: ['calendar-events', startDate, endDate],
-    queryFn: () => postsApi.getCalendarEvents(startDate, endDate),
-    enabled: !!(startDate && endDate),
-  });
-}
 
 // Suggest Post Time Hook (optional advanced feature)
 export function useSuggestPostTime(platform: string) {
@@ -186,22 +179,26 @@ export function useSuggestPostTime(platform: string) {
     staleTime: 60 * 60 * 1000, // 1 hour
   });
 }
-
-// Delete Post Hook
+// Hook to delete a post from calendar
 export function useDeletePost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: postsApi.deletePost,
+    mutationFn: (postId: number) => postsApi.deletePost(postId),
     onSuccess: () => {
+      // Invalidate calendar queries to refresh the calendar
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success('Post deleted successfully!');
+      toast.success('Post deleted successfully');
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.detail || 'Failed to delete post');
     },
   });
 }
+
+
+
 
 // Get Posts by Status Hook
 export function usePostsByStatus(status: 'draft' | 'scheduled' | 'published' | 'failed') {

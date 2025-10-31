@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import { AIProvidersInfo, EnhancementRequest, EnhancementResponse, PostTimeResponse } from '@/types';
+import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, PostTimeResponse } from '@/types';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -63,7 +63,10 @@ export const authApi = {
     const response = await api.get('/users/me');
     return response.data;
   },
-  
+  testEmail: async (email?:string) => {
+    const response = await api.post('/auth/test-email',{ email });
+    return response.data;
+  },
   getOAuthUrl: async (platform: string) => {
     const response = await api.get(`/auth/oauth/${platform}/authorize`);
     return response.data;
@@ -175,13 +178,28 @@ export const postsApi = {
   // ========================================
   
   // Get calendar events for date range
-  getCalendarEvents: async (startDate: string, endDate: string) => {
+
+  getCalendarEvents: async (startDate: string, endDate: string): Promise<CalendarEventsResponse> => {
     const response = await api.get('/posts/calendar/events', {
       params: { 
         start_date: startDate, 
         end_date: endDate 
       }
     });
+    return response.data;
+  },
+
+  // Get monthly summary
+  getCalendarSummary: async (month: string) => {
+    const response = await api.get('/posts/calendar/summary', {
+      params: { month }
+    });
+    return response.data;
+  },
+
+  // Publish post immediately
+  publishPostNow: async (postId: number) => {
+    const response = await api.post(`/posts/${postId}/publish`);
     return response.data;
   },
   

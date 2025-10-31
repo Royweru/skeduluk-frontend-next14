@@ -47,3 +47,16 @@ export function useCurrentUser() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
+
+export function useTestEmail() {
+  return  useMutation({
+    mutationFn: authApi.testEmail,
+    onSuccess: (data:any) => {
+      toast.success(data.message);
+    },   
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.detail || 'Failed to send test email';
+      toast.error(errorMessage);
+    }
+});
+}

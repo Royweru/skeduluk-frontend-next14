@@ -93,7 +93,21 @@ export interface ConnectionError {
 // ==================== POSTS ====================
 
 export type PostStatus = 'draft' | 'scheduled' | 'processing' | 'posting' | 'posted' | 'failed' | 'partial';
-
+// export interface PostStatus {
+//   post_id: number;
+//   status: string;
+//   error_message?: string;
+//   platforms: string[];
+//   created_at: string;
+//   scheduled_for?: string;
+//   results: Array<{
+//     platform: string;
+//     status: string;
+//     platform_post_id?: string;
+//     error?: string;
+//     posted_at?: string;
+//   }>;
+// }
 export interface Post {
   id: number;
   user_id: number;
@@ -289,18 +303,48 @@ export interface DashboardStats {
 export interface CalendarEvent {
   id: number;
   title: string;
+  content: string;
   start: string;
   end: string;
-  platforms: SocialPlatform[];
-  status: PostStatus;
+  platforms: string[];
+  status: 'scheduled' | 'posted' | 'failed' | 'processing' | 'draft';
+  image_urls: string[];
+  is_scheduled: boolean;
+  scheduled_for: string | null;
+  created_at: string;
+  error_message?: string;
+  color: string;
   allDay: boolean;
 }
 
-export interface CalendarView {
-  start: string;
-  end: string;
+export interface CalendarEventsResponse {
   events: CalendarEvent[];
+  start_date: string;
+  end_date: string;
+  total: number;
 }
+
+export interface CalendarDay {
+  date: Date | null;
+  dayNumber: number | null;
+  events: CalendarEvent[];
+  isCurrentMonth: boolean;
+}
+
+export interface MonthSummary {
+  [date: string]: {
+    total: number;
+    by_status: {
+      scheduled?: number;
+      posted?: number;
+      failed?: number;
+      processing?: number;
+    };
+  };
+}
+
+export type CalendarView = 'month' | 'list' | 'week';
+
 
 // ==================== API RESPONSES ====================
 
@@ -482,14 +526,4 @@ export interface AppSettings {
 
 // ==================== EXPORTS ====================
 
-export type {
-  User as UserType,
-  Post as PostType,
-  SocialConnection as SocialConnectionType,
-  PostTemplate as PostTemplateType,
-  Subscription as SubscriptionType,
-  CalendarEvent as CalendarEventType,
-  ApiResponse as ApiResponseType,
-  PaginatedResponse as PaginatedResponseType,
-  ErrorResponse as ErrorResponseType,
-}
+
