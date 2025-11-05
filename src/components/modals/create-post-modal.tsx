@@ -192,100 +192,154 @@ export const CreatePostModal = ({
   };
 
   // Handle post submission
-  const handleSubmitPost = async () => {
-    if (!postContent.trim()) {
-      toast.error('Please add some content');
-      return;
+ // Handle post submission
+const handleSubmitPost = async () => {
+  if (!postContent.trim()) {
+    toast.error('Please add some content');
+    return;
+  }
+
+  if (selectedPlatforms.length === 0) {
+    toast.error('Please select at least one platform');
+    return;
+  }
+
+  // Check for character limit violations
+  const violations = selectedPlatforms.filter(platformId => {
+    const platform = platforms.find(p => p.id === platformId);
+    if (!platform) return false;
+    const text = customizePerPlatform ? (platformSpecific[platformId]?.text || '') : postContent;
+    return text.length > platform.limit;
+  });
+
+  if (violations.length > 0) {
+    toast.error('Please fix character limit violations before posting');
+    return;
+  }
+
+  try {
+    const formData = new FormData();
+    
+    // Add basic content
+    formData.append('original_content', postContent);
+    formData.append('platforms', JSON.stringify(selectedPlatforms));
+
+    // Add schedule if set
+    if (scheduledDate) {
+      formData.append('scheduled_for', new Date(scheduledDate).toISOString());
     }
 
-    if (selectedPlatforms.length === 0) {
-      toast.error('Please select at least one platform');
-      return;
-    }
-
-    // Check for character limit violations
-    const violations = selectedPlatforms.filter(platformId => {
-      const platform = platforms.find(p => p.id === platformId);
-      if (!platform) return false;
-      const text = customizePerPlatform ? (platformSpecific[platformId]?.text || '') : postContent;
-      return text.length > platform.limit;
-    });
-
-    if (violations.length > 0) {
-      toast.error('Please fix character limit violations before posting');
-      return;
-    }
-
-    try {
-      const formData = new FormData();
+    // Handle enhanced content (AI or platform-specific)
+    if (customizePerPlatform) {
+      // User manually customized per platform
+      const platformContent: Record<string, string> = {};
+      selectedPlatforms.forEach(platformId => {
+        if (platformSpecific[platformId]?.text) {
+          platformContent[platformId] = platformSpecific[platformId].text;
+        }
+      });
       
-      // Add content
-      formData.append('original_content', postContent);
-      formData.append('platforms', JSON.stringify(selectedPlatforms));
+      if (Object.keys(platformContent).length > 0) {
+        formData.append('enhanced_content', JSON.stringify(platformContent));
+      }
+    } else if (aiEnhancements.length > 0 && selectedEnhancement) {
+      // AI enhanced content was selected
+      const enhancedMap = aiEnhancements.reduce((acc, enh) => ({
+        ...acc,
+        [enh.platform.toLowerCase()]: enh.enhanced_content
+      }), {});
+      formData.append('enhanced_content', JSON.stringify(enhancedMap));
+    }
 
-      // Add platform-specific content if customized
-      if (customizePerPlatform) {
-        const platformContent: Record<string, string> = {};
-        selectedPlatforms.forEach(platformId => {
-          if (platformSpecific[platformId]?.text) {
-            platformContent[platformId] = platformSpecific[platformId].text;
+    // Handle media uploads
+    if (customizePerPlatform) {
+      // Platform-specific media
+      let hasMedia = false;
+      selectedPlatforms.forEach(platformId => {
+        const media = platformSpecific[platformId]?.media || [];
+        if (media.length > 0) {
+          hasMedia = true;
+          media.forEach(file => {
+            // Separate images and videos
+            if (file.type.startsWith('image/')) {
+              formData.append('images', file);
+            } else if (file.type.startsWith('video/')) {
+              formData.append('videos', file);
+            }
+          });
+        }
+      });
+      
+      if (hasMedia) {
+        console.log('Uploading platform-specific media');
+      }
+    } else {
+      // Universal media for all platforms
+      if (uploadedImages.length > 0) {
+        uploadedImages.forEach(file => {
+          if (file.type.startsWith('image/')) {
+            formData.append('images', file);
+          } else if (file.type.startsWith('video/')) {
+            formData.append('videos', file);
           }
         });
-        formData.append('enhanced_content', JSON.stringify(platformContent));
-      } else if (aiEnhancements.length > 0 && selectedEnhancement) {
-        // Add AI enhanced content
-        const enhancedMap = aiEnhancements.reduce((acc, enh) => ({
-          ...acc,
-          [enh.platform.toLowerCase()]: enh.enhanced_content
-        }), {});
-        formData.append('enhanced_content', JSON.stringify(enhancedMap));
+        console.log(`Uploading ${uploadedImages.length} media files`);
       }
-
-      // Add schedule
-      if (scheduledDate) {
-        formData.append('scheduled_for', new Date(scheduledDate).toISOString());
-      }
-
-      // Add images/videos
-      if (customizePerPlatform) {
-        // Add platform-specific media
-        selectedPlatforms.forEach(platformId => {
-          const media = platformSpecific[platformId]?.media || [];
-          media.forEach(file => {
-            formData.append(`media_${platformId}`, file);
-          });
-        });
-      } else {
-        // Add universal media
-        uploadedImages.forEach(file => {
-          formData.append('images', file);
-        });
-      }
-
-      await createPostMutation.mutateAsync(formData);
-
-      const createdPost = await createPostMutation.mutateAsync(formData);
-
-      // Success - reset form
-      setPostContent('');
-      setSelectedPlatforms([]);
-      setUploadedImages([]);
-      setScheduledDate('');
-      setAiEnhancements([]);
-      setShowAIPanel(false);
-      setSelectedEnhancement(null);
-      setGeneratedHashtags([]);
-      setPlatformSpecific({});
-      setCustomizePerPlatform(false);
-      setShowCreateModal(false);
-
-      // Call parent callback with created post data
-      onPostCreated?.(createdPost);
-    } catch (error: any) {
-      // Error already handled by mutation
-      console.error('Post creation error:', error);
     }
-  };
+
+    // Log FormData contents for debugging
+    console.log('FormData contents:');
+    Array.from(formData.entries()).forEach(([key, value]) => {
+      if (value instanceof File) {
+        console.log(`${key}: ${value.name} (${value.type}, ${value.size} bytes)`);
+      } else {
+        console.log(`${key}: ${value}`);
+      }
+    });
+
+    // ✅ CALL MUTATION ONLY ONCE
+    const createdPost = await createPostMutation.mutateAsync(formData);
+    
+    console.log('Post created successfully:', createdPost);
+
+    // Success - reset form
+    setPostContent('');
+    setSelectedPlatforms([]);
+    setUploadedImages([]);
+    setScheduledDate('');
+    setAiEnhancements([]);
+    setShowAIPanel(false);
+    setSelectedEnhancement(null);
+    setGeneratedHashtags([]);
+    setPlatformSpecific({});
+    setCustomizePerPlatform(false);
+    setShowCreateModal(false);
+
+    // Call parent callback with created post data
+    onPostCreated?.(createdPost);
+    
+    // Show success message based on schedule
+    if (scheduledDate) {
+      toast.success(`📅 Post scheduled for ${new Date(scheduledDate).toLocaleString()}`);
+    } else {
+      toast.success('🚀 Post is being published!');
+    }
+    
+  } catch (error: any) {
+    // Error already handled by mutation's onError
+    console.error('Post creation error:', error);
+    
+    // Additional user-friendly error handling
+    if (error.response?.status === 413) {
+      toast.error('Files are too large. Please use smaller images/videos.');
+    } else if (error.response?.status === 400) {
+      const detail = error.response?.data?.detail;
+      if (typeof detail === 'string') {
+        toast.error(detail);
+      }
+    }
+  }
+};
 
   const handleMediaUpload = (files: FileList | null, platformId?: string) => {
     if (!files) return;
