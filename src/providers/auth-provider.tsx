@@ -16,6 +16,7 @@ interface AuthContextType {
   isLoading: boolean;
   user: any | null;
   login: (username: string, password: string) => Promise<void>;
+  verifyEmail : (token: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     register,
     logout,
     refreshUser,
+    verifyEmail,
   } = useAuthStore();
 
   // Initialize auth state on mount
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value: AuthContextType = {
     isAuthenticated,
+    verifyEmail,
     isLoading,
     user,
     login,

@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, ArrowRight, Mail } from 'lucide-react';
-import { useAuthStore } from '@/store/auth-store';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useAuth } from '@/providers/auth-provider';
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'expired';
 
@@ -17,7 +17,7 @@ export default function VerifyEmailPage() {
   const [message, setMessage] = useState('');
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { verifyEmail } = useAuthStore();
+  const { verifyEmail } = useAuth();
 
   const token = searchParams.get('token');
 
@@ -36,7 +36,7 @@ export default function VerifyEmailPage() {
         toast.success('Email verified! Redirecting to login...');
 
         setTimeout(() => {
-          router.push('/auth/auth/login');
+          router.push('/auth/login');
         }, 3000);
       } catch (error: any) {
         const errorMsg = error.message || 'Failed to verify email';
