@@ -315,7 +315,8 @@ export default function DashboardOverviewPage() {
           </div>
           <Button
             onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
+            className="bg-gradient-to-r from-blue-600 to-purple-600
+             hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
           >
             <Plus className="mr-2 h-5 w-5" />
             Create Post

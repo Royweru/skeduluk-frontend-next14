@@ -14,7 +14,8 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
-import { useEnhanceContent, useGenerateHashtags, useAIProviders, useCreatePost } from '@/hooks/api/use-posts';
+import { useEnhanceContent, useGenerateHashtags, 
+  useAIProviders, useCreatePost } from '@/hooks/api/use-posts';
 import toast from 'react-hot-toast';
 
 interface PlatformContent {
@@ -191,7 +192,7 @@ export const CreatePostModal = ({
     }
   };
 
-  // Handle post submission
+  
  // Handle post submission
 const handleSubmitPost = async () => {
   if (!postContent.trim()) {
@@ -204,7 +205,7 @@ const handleSubmitPost = async () => {
     return;
   }
 
-  // Check for character limit violations
+  // ✅ Check for character limit violations
   const violations = selectedPlatforms.filter(platformId => {
     const platform = platforms.find(p => p.id === platformId);
     if (!platform) return false;
@@ -220,89 +221,78 @@ const handleSubmitPost = async () => {
   try {
     const formData = new FormData();
     
-    // Add basic content
+    // ✅ Add basic content
     formData.append('original_content', postContent);
     formData.append('platforms', JSON.stringify(selectedPlatforms));
 
-    // Add schedule if set
+    // ✅ Add schedule if set
     if (scheduledDate) {
       formData.append('scheduled_for', new Date(scheduledDate).toISOString());
     }
 
-    // Handle enhanced content (AI or platform-specific)
+    // ✅ Handle platform-specific or AI-enhanced content
+    let finalEnhancedContent: Record<string, string> = {};
+    
     if (customizePerPlatform) {
       // User manually customized per platform
-      const platformContent: Record<string, string> = {};
       selectedPlatforms.forEach(platformId => {
         if (platformSpecific[platformId]?.text) {
-          platformContent[platformId] = platformSpecific[platformId].text;
+          finalEnhancedContent[platformId] = platformSpecific[platformId].text;
         }
       });
-      
-      if (Object.keys(platformContent).length > 0) {
-        formData.append('enhanced_content', JSON.stringify(platformContent));
-      }
     } else if (aiEnhancements.length > 0 && selectedEnhancement) {
       // AI enhanced content was selected
-      const enhancedMap = aiEnhancements.reduce((acc, enh) => ({
+      finalEnhancedContent = aiEnhancements.reduce((acc, enh) => ({
         ...acc,
         [enh.platform.toLowerCase()]: enh.enhanced_content
       }), {});
-      formData.append('enhanced_content', JSON.stringify(enhancedMap));
+    }
+    
+    if (Object.keys(finalEnhancedContent).length > 0) {
+      formData.append('enhanced_content', JSON.stringify(finalEnhancedContent));
     }
 
-    // Handle media uploads
+    // ✅ Handle media uploads
+    const addedMedia = new Set<File>(); // Track added files to avoid duplicates
+    
     if (customizePerPlatform) {
       // Platform-specific media
-      let hasMedia = false;
       selectedPlatforms.forEach(platformId => {
         const media = platformSpecific[platformId]?.media || [];
-        if (media.length > 0) {
-          hasMedia = true;
-          media.forEach(file => {
-            // Separate images and videos
+        media.forEach(file => {
+          if (!addedMedia.has(file)) {
             if (file.type.startsWith('image/')) {
               formData.append('images', file);
             } else if (file.type.startsWith('video/')) {
               formData.append('videos', file);
             }
-          });
-        }
-      });
-      
-      if (hasMedia) {
-        console.log('Uploading platform-specific media');
-      }
-    } else {
-      // Universal media for all platforms
-      if (uploadedImages.length > 0) {
-        uploadedImages.forEach(file => {
-          if (file.type.startsWith('image/')) {
-            formData.append('images', file);
-          } else if (file.type.startsWith('video/')) {
-            formData.append('videos', file);
+            addedMedia.add(file);
           }
         });
-        console.log(`Uploading ${uploadedImages.length} media files`);
-      }
+      });
+    } else {
+      // Universal media for all platforms
+      uploadedImages.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          formData.append('images', file);
+        } else if (file.type.startsWith('video/')) {
+          formData.append('videos', file);
+        }
+      });
     }
 
-    // Log FormData contents for debugging
-    console.log('FormData contents:');
-    Array.from(formData.entries()).forEach(([key, value]) => {
-      if (value instanceof File) {
-        console.log(`${key}: ${value.name} (${value.type}, ${value.size} bytes)`);
-      } else {
-        console.log(`${key}: ${value}`);
-      }
-    });
-
-    // ✅ CALL MUTATION ONLY ONCE
+    // ✅ Debug logging
+    console.log('📤 Sending post with:');
+    console.log('  Platforms:', selectedPlatforms);
+    console.log('  Has enhanced content:', Object.keys(finalEnhancedContent).length > 0);
+    console.log('  Media files:', addedMedia.size || uploadedImages.length);
+    
+    // ✅ Call mutation (ONLY ONCE)
     const createdPost = await createPostMutation.mutateAsync(formData);
     
-    console.log('Post created successfully:', createdPost);
+    console.log('✅ Post created:', createdPost);
 
-    // Success - reset form
+    // ✅ Reset form
     setPostContent('');
     setSelectedPlatforms([]);
     setUploadedImages([]);
@@ -315,10 +305,10 @@ const handleSubmitPost = async () => {
     setCustomizePerPlatform(false);
     setShowCreateModal(false);
 
-    // Call parent callback with created post data
+    // ✅ Call parent callback
     onPostCreated?.(createdPost);
     
-    // Show success message based on schedule
+    // ✅ Show success message
     if (scheduledDate) {
       toast.success(`📅 Post scheduled for ${new Date(scheduledDate).toLocaleString()}`);
     } else {
@@ -326,16 +316,19 @@ const handleSubmitPost = async () => {
     }
     
   } catch (error: any) {
-    // Error already handled by mutation's onError
-    console.error('Post creation error:', error);
+    console.error('❌ Post creation error:', error);
     
-    // Additional user-friendly error handling
+    // ✅ User-friendly error handling
     if (error.response?.status === 413) {
       toast.error('Files are too large. Please use smaller images/videos.');
     } else if (error.response?.status === 400) {
       const detail = error.response?.data?.detail;
       if (typeof detail === 'string') {
         toast.error(detail);
+      } else if (Array.isArray(detail)) {
+        // Handle Pydantic validation errors
+        const firstError = detail[0];
+        toast.error(firstError?.msg || 'Validation error');
       }
     }
   }

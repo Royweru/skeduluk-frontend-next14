@@ -413,7 +413,8 @@ export function EnhancedPostCreator({ platforms, connectedPlatforms, onSuccess }
             isRecording ? "text-red-600 animate-pulse" : "text-gray-400"
           )} />
           <p className="text-sm font-medium text-gray-700">
-            {transcribeMutation.isPending ? 'Transcribing...' : isRecording ? 'Stop Recording' : 'Record Audio'}
+            {transcribeMutation.isPending ? 'Transcribing...' : isRecording ? 'Stop Recording' : 
+            'Record Audio'}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             {isRecording ? 'Click to stop' : 'Voice to text'}
@@ -472,7 +473,11 @@ export function EnhancedPostCreator({ platforms, connectedPlatforms, onSuccess }
       <div className="flex gap-3 pt-4 border-t">
         <Button
           onClick={handleSubmit}
-          disabled={!content.trim() || selectedPlatforms.length === 0 || hasErrors || createPostMutation.isPending}
+          disabled={!content.trim() 
+            || selectedPlatforms.length === 0 
+            || hasErrors 
+            || createPostMutation.isPending
+          }
           className="flex-1 h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
         >
           {createPostMutation.isPending ? (
