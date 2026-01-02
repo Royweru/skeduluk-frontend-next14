@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, PostTimeResponse } from '@/types';
+import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostTimeResponse, SelectedPageResponse } from '@/types';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -305,4 +305,26 @@ export const paymentsApi = {
     const response = await api.get('/payments/subscriptions');
     return response.data;
   },
+};
+
+//Facebook API 
+
+export const facebookApi = {
+  // Get list of pages user can manage
+  async getPages(): Promise<FacebookPagesResponse> {
+    const response = await api.get('/social/facebook/pages');
+    return response.data;
+  },
+
+  // Select a page for posting
+  async selectPage(pageId: string) {
+    const response = await api.post(`/social/facebook/pages/select?page_id=${pageId}`);
+    return response.data;
+  },
+
+  // Get currently selected page
+  async getSelectedPage(): Promise<SelectedPageResponse> {
+    const response = await api.get('/social/facebook/selected-page');
+    return response.data;
+  }
 };

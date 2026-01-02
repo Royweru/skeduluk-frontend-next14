@@ -524,6 +524,36 @@ export interface AppSettings {
   };
 }
 
+//Facebook page connections 
+
+export interface FacebookPage {
+  id: string;
+  name: string;
+  category: string;
+  access_token: string;
+  picture_url?: string;
+  is_selected: boolean;
+}
+
+export interface FacebookPagesResponse {
+  pages: FacebookPage[];
+  selected_page_id: string | null;
+  total: number;
+  message?: string;
+  create_page_url?: string;
+}
+
+export interface SelectedPageResponse {
+  has_selection: boolean;
+  page?: {
+    id: string;
+    name: string;
+    category: string;
+    picture_url?: string;
+  };
+  message?: string;
+}
+
 // ==================== EXPORTS ====================
 
 

@@ -64,7 +64,7 @@ export function usePostStatusPolling(postId: number | null, enabled: boolean = f
       setHasNotified(true);
 
       if (data.status === 'posted') {
-        const platformNames = data.platforms.map(p => 
+        const platformNames = data?.platforms?.map(p => 
           p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()
         ).join(', ');
         

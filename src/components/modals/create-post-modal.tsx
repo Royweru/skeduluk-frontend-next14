@@ -17,6 +17,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { useEnhanceContent, useGenerateHashtags, 
   useAIProviders, useCreatePost } from '@/hooks/api/use-posts';
 import toast from 'react-hot-toast';
+import { useFacebookPages } from '@/hooks/api/use-facebook';
 
 interface PlatformContent {
   text: string;
@@ -81,6 +82,7 @@ export const CreatePostModal = ({
   // Hooks
   const createPostMutation = useCreatePost();
   const enhanceMutation = useEnhanceContent();
+  const {data: facebookPages} = useFacebookPages();
   const hashtagsMutation = useGenerateHashtags();
   const { data: aiProviders } = useAIProviders();
 
@@ -204,7 +206,7 @@ const handleSubmitPost = async () => {
     toast.error('Please select at least one platform');
     return;
   }
-
+  
   // ✅ Check for character limit violations
   const violations = selectedPlatforms.filter(platformId => {
     const platform = platforms.find(p => p.id === platformId);
@@ -217,7 +219,13 @@ const handleSubmitPost = async () => {
     toast.error('Please fix character limit violations before posting');
     return;
   }
-
+  if (selectedPlatforms.includes('facebook')) {
+    const selectedPage = facebookPages?.pages?.find(p => p.is_selected);
+    if (!selectedPage) {
+      toast.error('Please select a Facebook Page in Social Connections');
+      return;
+    }
+  }
   try {
     const formData = new FormData();
     
