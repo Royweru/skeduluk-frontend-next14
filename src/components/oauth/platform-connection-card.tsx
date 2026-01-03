@@ -67,6 +67,16 @@ const PLATFORMS: Platform[] = [
     color: 'text-black',
     bgColor: 'bg-black',
     features: ['Short-form videos', 'Trending sounds', 'Hashtag challenges', 'Creator analytics']
+  },
+ 
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    description: 'Upload and share video content with millions',
+    icon: Youtube,
+    color: 'text-red-600',
+    bgColor: 'bg-red-600',
+    features: ['Video uploads', 'Playlists', 'Community posts', 'Detailed analytics']
   }
 ];
 
@@ -253,7 +263,8 @@ export function PlatformConnectionCard({ connections }: PlatformConnectionCardPr
                 </li>
               </ol>
               <p className="text-xs text-blue-700 mt-3">
-                💡 <span className="font-semibold">Pro tip:</span> We only request permissions needed to schedule and publish posts. Your account security is our priority.
+                💡 <span className="font-semibold">Pro tip:</span> We only request
+                 permissions needed to schedule and publish posts. Your account security is our priority.
               </p>
             </div>
           </div>

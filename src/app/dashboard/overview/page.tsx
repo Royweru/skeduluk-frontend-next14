@@ -124,7 +124,13 @@ export default function DashboardOverviewPage() {
       color: "bg-black",
       limit: 2200,
     },
-    // { id: 'youtube', name: 'YouTube', icon: Youtube, color: 'bg-red-600', limit: 5000 }
+    {
+       id: 'youtube',
+        name: 'YouTube',
+        icon: Youtube, 
+        color: 'bg-red-600',
+         limit: 5000
+         }
   ];
 
   const quickStats = [
