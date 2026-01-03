@@ -348,7 +348,7 @@ const handleSubmitPost = async () => {
     const newFiles = Array.from(files).filter(file => {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
-      const isUnder10MB = file.size <= 10 * 1024 * 1024;
+      const isUnder10MB = file.size <= 500 * 1024 * 1024;
       
       if (!isUnder10MB) {
         toast.error(`${file.name} is too large. Max 10MB per file.`);
@@ -895,7 +895,7 @@ const handleSubmitPost = async () => {
                                 Drag and drop files here or click to browse
                               </p>
                               <p className="text-xs text-gray-500">
-                                Images and videos supported • Max 10MB per file
+                                Images and videos supported • Max 500MB per file
                               </p>
                             </label>
                           </div>
