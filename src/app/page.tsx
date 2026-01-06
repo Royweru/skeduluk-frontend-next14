@@ -1,12 +1,27 @@
-import Image from "next/image";
 
-export default function Home() {
+import { CTASection } from '@/components/cta-section';
+import { FeaturesSection } from '@/components/features-section';
+import { Footer } from '@/components/footer';
+import { HeroSection } from '@/components/hero-section';
+import { Navbar } from '@/components/navbar';
+import React from 'react';
+
+
+function Home() {
+  // In a real Home, you'd determine this state from auth cookies/context
+  const isLoggedIn = false; // Change to true to test logged-in view
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center 
-    min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-    <div>
-      Welcome home where design meets inspiration
-    </div>
+    <div className="min-h-screen font-sans antialiased overflow-x-hidden bg-white">
+      <Navbar isLoggedIn={isLoggedIn} />
+      <main>
+        <HeroSection />
+        <FeaturesSection />
+        <CTASection />
+      </main>
+      <Footer />
     </div>
   );
 }
+
+export default Home;
