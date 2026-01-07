@@ -1,6 +1,7 @@
 // src/components/Navbar.js
 import React, { useState } from 'react';
 import { Menu, X, LayoutGrid } from 'lucide-react';
+import Link from 'next/link';
 
 export const Navbar = ({ isLoggedIn }:{
     isLoggedIn:boolean
@@ -29,18 +30,33 @@ export const Navbar = ({ isLoggedIn }:{
           {/* Dynamic CTAs based on login status */}
           <div className="hidden md:flex items-center space-x-4">
             {isLoggedIn ? (
-              <button className="bg-sked-purple hover:bg-sked-purpleHover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sked-purple/20 flex items-center gap-2">
+              <Link href="/dashboard/overview">
+                    <button className="bg-sked-purple hover:bg-sked-purpleHover
+               text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg
+                shadow-sked-purple/20 flex items-center gap-2">
                 <LayoutGrid className="w-5 h-5" />
                 Go to Dashboard
               </button>
+              </Link>
+        
             ) : (
               <>
+              <Link
+                href={'/auth/login'}
+              >
                 <button className="text-sked-dark font-bold hover:text-sked-purple transition px-4 py-2">
                   Login
                 </button>
-                <button className="bg-sked-purple hover:bg-sked-purpleHover text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sked-purple/20">
+              </Link>
+                <Link
+                  href ={'/auth/register'}
+                >
+                   <button className="bg-sked-purple hover:bg-sked-purpleHover
+                    text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-sked-purple/20">
                   Get Started Free
                 </button>
+                </Link>
+             
               </>
             )}
           </div>
