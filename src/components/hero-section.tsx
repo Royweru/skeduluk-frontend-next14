@@ -1,14 +1,11 @@
 // src/components/HeroSection.js
 import React from 'react';
 import { ChevronRight, CheckCircle2 } from 'lucide-react';
-// IMPORTANT: Import your dashboard image here.
-// For this code to work immediately, put your image in src/assets/ and name it dashboard-mockup.png
-// import dashboardImage from '../assets/dashboard-mockup.png'; 
+
 
 export const HeroSection = () => {
-  // Using a placeholder if you haven't set up the image path yet.
-  // Once you have the image, remove this line and uncomment the import above.
-  const dashboardImage = "https://via.placeholder.com/1200x800/f3f4f6/6366f1?text=Insert+Your+Dashboard+Image+Here";
+  
+  const dashboardImage = "/hero.jpg";
 
   return (
     <div className="relative bg-sked-dark overflow-hidden pt-32 pb-20 lg:pt-40 lg:pb-28">
