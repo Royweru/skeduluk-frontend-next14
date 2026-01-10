@@ -1,24 +1,130 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { postsApi } from '@/lib/api';
-import { toast } from 'react-hot-toast';
-import { CalendarEventsResponse } from '@/types';
+// hooks/api/use-calendar.ts
 
-export function useCalendarEvents(startDate: string, endDate: string) {
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { CalendarEventsResponse, CalendarEvent } from '@/types/calendar';
+import api from '@/lib/api'; // Your API client
+
+// Fetch calendar events
+export const useCalendarEvents = (startDate: string, endDate: string) => {
   return useQuery<CalendarEventsResponse>({
     queryKey: ['calendar-events', startDate, endDate],
-    queryFn: () => postsApi.getCalendarEvents(startDate, endDate),
-    enabled: !!(startDate && endDate),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const { data } = await api.get('/posts/calendar/events', {
+        params: { start_date: startDate, end_date: endDate }
+      });
+      return data;
+    },
+    enabled: !!startDate && !!endDate,
+    staleTime: 30000, // 30 seconds
   });
-}
+};
 
-// Hook to fetch monthly summary
-export function useCalendarSummary(month: string) {
-  return useQuery({
-    queryKey: ['calendar-summary', month],
-    queryFn: () => postsApi.getCalendarSummary(month),
-    enabled: !!month,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+// Update post schedule (for drag-and-drop)
+export const useUpdatePostSchedule = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      postId, 
+      scheduledFor 
+    }: { 
+      postId: number; 
+      scheduledFor: string;
+    }) => {
+      const { data } = await api.put(`/posts/${postId}`, {
+        scheduled_for: scheduledFor
+      });
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
   });
-}
+};
+
+// Delete post
+export const useDeletePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: number) => {
+      await api.delete(`/posts/${postId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
+
+// Publish post now
+export const usePublishPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: number) => {
+      const { data } = await api.post(`/posts/${postId}/publish`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
+
+// Duplicate post
+export const useDuplicatePost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postId: number) => {
+      const { data } = await api.post(`/posts/${postId}/duplicate`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
+
+// Bulk delete posts
+export const useBulkDeletePosts = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (postIds: number[]) => {
+      await api.post('/posts/bulk-delete', { post_ids: postIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
+
+// Bulk reschedule posts
+export const useBulkReschedulePosts = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      postIds, 
+      scheduledFor 
+    }: { 
+      postIds: number[]; 
+      scheduledFor: string;
+    }) => {
+      await api.post('/posts/bulk-reschedule', {
+        post_ids: postIds,
+        scheduled_for: scheduledFor
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+  });
+};
