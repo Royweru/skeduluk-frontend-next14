@@ -46,7 +46,11 @@ import {
 } from '@/hooks/api/use-templates';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
-
+// Add these imports
+import { TemplateDetailModal } from '@/components/templates/template-detail-modal';
+import { TemplateUseModal } from '@/components/templates/template-use-modal';
+import { TemplateEditorModal } from '@/components/templates/template-editor-modal';
+import { FolderManager } from '@/components/templates/folder-manager';
 export default function TemplatesPage() {
   // State
   const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -386,11 +390,42 @@ export default function TemplatesPage() {
         )}
       </div>
 
-      {/* Modals - You'll need to create these components */}
-      {/* <TemplateDetailModal ... /> */}
-      {/* <TemplateUseModal ... /> */}
-      {/* <TemplateEditorModal ... /> */}
-      {/* <CreateFolderModal ... /> */}
+     {/* Template Detail Modal */}
+<TemplateDetailModal
+  template={selectedTemplate}
+  open={showDetailModal}
+  onOpenChange={setShowDetailModal}
+  onUse={handleUseTemplate}
+  onEdit={handleEditTemplate}
+  onToggleFavorite={handleToggleFavorite}
+/>
+
+{/* Template Use Modal */}
+<TemplateUseModal
+  template={selectedTemplate}
+  open={showUseModal}
+  onOpenChange={setShowUseModal}
+  onSuccess={() => {
+    // Refresh posts list or show success message
+    toast.success('Post created from template!');
+  }}
+/>
+
+{/* Template Editor Modal */}
+<TemplateEditorModal
+  template={selectedTemplate}
+  open={showEditorModal}
+  onOpenChange={setShowEditorModal}
+  onSuccess={() => {
+    // Refresh templates list
+  }}
+/>
+
+{/* Folder Manager */}
+<FolderManager
+  open={showCreateFolder}
+  onOpenChange={setShowCreateFolder}
+/>
     </div>
   );
 }

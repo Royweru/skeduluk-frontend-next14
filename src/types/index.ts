@@ -554,6 +554,91 @@ export interface SelectedPageResponse {
   message?: string;
 }
 
-// ==================== EXPORTS ====================
+// ============================================================================
+// Template TYPES
+// ============================================================================
+
+export interface TemplateVariable {
+  name: string;
+  label: string;
+  type: 'text' | 'date' | 'number' | 'hashtags' | 'url';
+  placeholder: string;
+  required: boolean;
+  default_value?: string;
+}
+
+export interface Template {
+  id: number;
+  user_id?: number;
+  name: string;
+  description?: string;
+  category: string;
+  content_template: string;
+  variables?: TemplateVariable[];
+  platform_variations?: Record<string, string>;
+  supported_platforms: string[];
+  tone: string;
+  suggested_hashtags?: string[];
+  suggested_media_type?: string;
+  is_public: boolean;
+  is_system: boolean;
+  is_favorite: boolean;
+  usage_count: number;
+  success_rate: number;
+  avg_engagement?: Record<string, number>;
+  folder_id?: number;
+  thumbnail_url?: string;
+  color_scheme: string;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+  last_used_at?: string;
+}
+
+export interface TemplateFolder {
+  id: number;
+  user_id: number;
+  name: string;
+  description?: string;
+  color: string;
+  icon: string;
+  template_count?: number;
+  created_at: string;
+}
+
+export interface TemplateSearchParams {
+  query?: string;
+  category?: string;
+  tone?: string;
+  platforms?: string;
+  is_favorite?: boolean;
+  folder_id?: number;
+  include_system?: boolean;
+  include_community?: boolean;
+  sort_by?: string;
+  sort_order?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface TemplateAnalytics {
+  total_uses: number;
+  success_rate: number;
+  avg_engagement_rate: number;
+  platform_breakdown: Record<string, number>;
+  recent_posts: Array<{
+    post_id: number;
+    platform: string;
+    engagement_rate: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    posted_at: string;
+  }>;
+  engagement_trend: Array<{
+    date: string;
+    engagement_rate: number;
+  }>;
+}
 
 

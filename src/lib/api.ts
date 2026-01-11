@@ -1,5 +1,5 @@
 // src/lib/api.ts
-import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostTimeResponse, SelectedPageResponse } from '@/types';
+import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostTimeResponse, SelectedPageResponse, Template, TemplateAnalytics, TemplateFolder, TemplateSearchParams } from '@/types';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -327,4 +327,104 @@ export const facebookApi = {
     const response = await api.get('/social/facebook/selected-page');
     return response.data;
   }
+};
+
+
+// ============================================================================
+// TEMPLATE API FUNCTIONS
+// ============================================================================
+
+
+
+export const templatesApi = {
+  search: async (params: TemplateSearchParams) => {
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        queryParams.append(key, value.toString());
+      }
+    });
+    
+    const response = await api.get(
+      `/templates/search?${queryParams.toString()}`
+    );
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<Template> => {
+    const response = await api.get(
+      `/templates/${id}`
+    );
+    return response.data;
+  },
+
+  create: async (data: Partial<Template>) => {
+    const response = await api.post(
+      `/templates/`,
+      data
+    );
+    return response.data;
+  },
+
+  update: async ({ id, data }: { id: number; data: Partial<Template> }) => {
+    const response = await api.put(
+      `/templates/${id}`,
+      data
+    );
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/templates/${id}`);
+  },
+
+  toggleFavorite: async (id: number) => {
+    const response = await api.post(
+      `/templates/${id}/favorite`
+    )
+    return response.data;
+  },
+
+  useTemplate: async (id: number, data: any) => {
+    const response = await api.post(
+      `/templates/use/${id}`,
+      data
+    );
+    return response.data;
+  },
+
+  getAnalytics: async (id: number): Promise<TemplateAnalytics> => {
+    const response = await api.get(
+      `/templates/${id}/analytics`
+    );
+    return response.data;
+  },
+
+  getCategories: async () => {
+    const response = await api.get(
+      `/templates/categories/list`
+    );
+    return response.data;
+  },
+
+  // Folders
+  createFolder: async (data: Partial<TemplateFolder>) => {
+    const response = await api.post(
+      `/templates/folders`,
+      data
+    );
+    return response.data;
+  },
+
+  getFolders: async (): Promise<TemplateFolder[]> => {
+    const response = await api.get(
+      `/templates/folders`
+    );
+    return response.data;
+  },
+
+  deleteFolder: async (id: number) => {
+    await api.delete(`/templates/folders/${id}`);
+  },
 };
