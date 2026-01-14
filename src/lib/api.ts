@@ -1,5 +1,6 @@
 // src/lib/api.ts
-import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostTimeResponse, SelectedPageResponse, Template, TemplateAnalytics, TemplateFolder, TemplateSearchParams } from '@/types';
+import { AnalyticsOverTime, AnalyticsSummary, DashboardAnalytics, FetchAnalyticsResponse, PlatformComparison, TopPerformingPost } from '@/app/types';
+import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostAnalytics, PostTimeResponse, SelectedPageResponse, Template, TemplateAnalytics, TemplateFolder, TemplateSearchParams } from '@/types';
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -425,5 +426,61 @@ export const templatesApi = {
 
   deleteFolder: async (id: number) => {
     await api.delete(`/templates/folders/${id}`);
+  },
+};
+
+export const analyticsApi = {
+  // Fetch analytics for a specific post
+  fetchPostAnalytics: async (postId: number): Promise<FetchAnalyticsResponse> => {
+    const response = await api.post(`/analytics/fetch/${postId}`);
+    return response.data;
+  },
+
+  // Get stored analytics for a post
+  getPostAnalytics: async (postId: number, platform?: string): Promise<PostAnalytics[]> => {
+    const response = await api.get(`/analytics/post/${postId}`, {
+      params: platform ? { platform } : {}
+    });
+    return response.data;
+  },
+
+  // Get dashboard analytics
+  getDashboardAnalytics: async (days: number = 30, platform?: string): Promise<DashboardAnalytics> => {
+    const response = await api.get('/analytics/dashboard', {
+      params: { days, platform }
+    });
+    return response.data;
+  },
+
+  // Get analytics summary
+  getSummary: async (days: number = 30, platform?: string): Promise<AnalyticsSummary> => {
+    const response = await api.get('/analytics/summary', {
+      params: { days, platform }
+    });
+    return response.data;
+  },
+
+  // Get top performing posts
+  getTopPosts: async (limit: number = 10, metric: 'engagement_rate' | 'views' | 'likes' = 'engagement_rate'): Promise<TopPerformingPost[]> => {
+    const response = await api.get('/analytics/top-posts', {
+      params: { limit, metric }
+    });
+    return response.data;
+  },
+
+  // Get analytics trends
+  getTrends: async (days: number = 30, platform?: string): Promise<AnalyticsOverTime[]> => {
+    const response = await api.get('/analytics/trends', {
+      params: { days, platform }
+    });
+    return response.data;
+  },
+
+  // Get platform comparison
+  getPlatformComparison: async (days: number = 30): Promise<PlatformComparison> => {
+    const response = await api.get('/analytics/comparison', {
+      params: { days }
+    });
+    return response.data;
   },
 };
