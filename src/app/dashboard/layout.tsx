@@ -94,7 +94,7 @@ const user = null
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="p-4 sm:p-6 lg:p-8"
+            className="p-4 sm:p-5 lg:p-6 bg-gradient-br from-gray-50 via-blue-50 to-purple-50"
           >
             {children}
           </motion.main>

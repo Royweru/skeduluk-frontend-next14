@@ -8,19 +8,16 @@ export interface CalendarEvent {
   id: number;
   title: string;
   content: string;
-  start: string; // ISO string
-  end: string; // ISO string
+  start: string;
+  end: string;
   platforms: Platform[];
   status: PostStatus;
   tags?: string[];
   image_urls?: string[];
-  video_urls?: string[];
-  is_scheduled: boolean;
-  scheduled_for: string | null;
-  created_at: string;
-  error_message?: string | null;
   color: string;
-  allDay: boolean;
+  scheduled_for?: string;
+  created_at: string;
+  error_message?: string;
 }
 
 export interface CalendarDay {

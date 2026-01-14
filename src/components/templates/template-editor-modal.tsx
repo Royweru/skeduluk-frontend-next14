@@ -35,13 +35,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  Template,
-  TemplateVariable,
+ 
   useCreateTemplate,
   useUpdateTemplate,
 } from '@/hooks/api/use-templates';
 import toast from 'react-hot-toast';
-
+import { Template, TemplateVariable } from '@/types';
 interface TemplateEditorModalProps {
   template: Template | null;
   open: boolean;

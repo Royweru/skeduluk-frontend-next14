@@ -31,7 +31,8 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Template, useTemplateAnalytics } from '@/hooks/api/use-templates';
+import { useTemplateAnalytics } from '@/hooks/api/use-templates';
+import { Template } from '@/types';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import {
@@ -109,7 +110,7 @@ export const TemplateDetailModal: React.FC<TemplateDetailModalProps> = ({
 
     return (
       <div className="space-y-3">
-        {template.variables.map((variable, index) => (
+        {template.variables.map((variable:any, index:any) => (
           <div
             key={index}
             className="p-4 rounded-lg border-2 border-gray-200 bg-gray-50 hover:border-blue-300 transition-colors"

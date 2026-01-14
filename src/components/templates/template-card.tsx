@@ -26,8 +26,8 @@ import {
   Clock,
   Zap,
 } from 'lucide-react';
+import { Template } from '@/types';
 import { cn } from '@/lib/utils';
-import { Template } from '@/hooks/api/use-templates';
 import { format } from 'date-fns';
 
 interface TemplateCardProps {
@@ -195,7 +195,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
                   {template.category.replace('_', ' ')}
                 </Badge>
                 <div className="flex items-center gap-1">
-                  {template.supported_platforms.slice(0, 4).map((platform) => (
+                  {template.supported_platforms.slice(0, 4).map((platform:string) => (
                     <span key={platform} className="text-sm" title={platform}>
                       {PLATFORM_ICONS[platform as keyof typeof PLATFORM_ICONS]}
                     </span>
@@ -336,7 +336,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({
 
         {/* Platforms */}
         <div className="flex items-center gap-1 mb-3">
-          {template.supported_platforms.slice(0, 5).map((platform) => (
+          {template.supported_platforms.slice(0, 5).map((platform:string) => (
             <div
               key={platform}
               className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-sm"

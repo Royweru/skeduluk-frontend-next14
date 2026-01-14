@@ -26,7 +26,8 @@ import {
   Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Template, useUseTemplate } from '@/hooks/api/use-templates';
+import { useUseTemplate } from '@/hooks/api/use-templates';
+import { Template } from '@/types';
 import { useSocialConnections } from '@/hooks/api/use-social-connections';
 import toast from 'react-hot-toast';
 
@@ -98,16 +99,20 @@ export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
   if (!template) return null;
 
   // Generate preview content
-  const previewContent = useMemo(() => {
-    let content = template.content_template;
+// Around line 101
+const previewContent = useMemo(() => {
+  // ✅ Guard clause at the START of useMemo
+  if (!template) return '';
+  
+  let content = template.content_template;
 
-    // Replace variables
-    Object.entries(variableValues).forEach(([key, value]) => {
-      content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `{${key}}`);
-    });
+  // Replace variables
+  Object.entries(variableValues).forEach(([key, value]) => {
+    content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `{${key}}`);
+  });
 
-    return content;
-  }, [template, variableValues]);
+  return content;
+}, [template, variableValues]);
 
   // Check if all required variables are filled
   const isFormValid = useMemo(() => {
@@ -115,14 +120,14 @@ export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
 
     const requiredVariables = template.variables?.filter((v) => v.required) || [];
     return requiredVariables.every(
-      (variable) => variableValues[variable.name]?.trim()
+      (variable:any) => variableValues[variable.name]?.trim()
     );
   }, [template, variableValues, selectedPlatforms]);
 
   // Get missing variables
   const missingVariables = useMemo(() => {
-    const required = template.variables?.filter((v) => v.required) || [];
-    return required.filter((variable) => !variableValues[variable.name]?.trim());
+    const required = template.variables?.filter((v: any) => v.required) || [];
+    return required.filter((variable:any) => !variableValues[variable.name]?.trim());
   }, [template, variableValues]);
 
   const handleVariableChange = (name: string, value: string) => {

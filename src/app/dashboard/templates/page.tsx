@@ -34,6 +34,8 @@ import {
   Clock,
   Zap,
   ArrowUpDown,
+  AlertCircle,
+  ArrowLeft,
 } from 'lucide-react';
 import { TemplateCard } from '@/components/templates/template-card';
 import {
@@ -41,8 +43,7 @@ import {
   useTemplateCategories,
   useTemplateFolders,
   useToggleFavorite,
-  useDeleteTemplate,
-  Template,
+  useDeleteTemplate
 } from '@/hooks/api/use-templates';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -51,6 +52,7 @@ import { TemplateDetailModal } from '@/components/templates/template-detail-moda
 import { TemplateUseModal } from '@/components/templates/template-use-modal';
 import { TemplateEditorModal } from '@/components/templates/template-editor-modal';
 import { FolderManager } from '@/components/templates/folder-manager';
+import { Template } from '@/types';
 export default function TemplatesPage() {
   // State
   const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -87,7 +89,7 @@ export default function TemplatesPage() {
   }, [searchQuery, selectedCategory, showFavorites, selectedFolder, sortBy, sortOrder, activeTab]);
 
   // Queries
-  const { data: templatesData, isLoading: templatesLoading } = useTemplates(searchParams);
+  const { data: templatesData, isLoading: templatesLoading, isError,error } = useTemplates(searchParams);
   const { data: categoriesData } = useTemplateCategories();
   const { data: folders } = useTemplateFolders();
   
@@ -140,13 +142,34 @@ export default function TemplatesPage() {
     { id: 'trending', label: 'Trending', icon: TrendingUp },
   ];
 
+  if (isError) { 
+    console.log('Error loading the templates : ', error)
+  
+  return (
+    <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-red-300">
+      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <AlertCircle className="h-8 w-8 text-red-600" />
+      </div>
+      <h3 className="text-lg font-semibold mb-2">Error Loading Templates</h3>
+      <p className="text-gray-600 mb-4">
+        {error?.message || 'Authentication error - please try logging in again.'}
+      </p>
+      <Button onClick={() => { localStorage.removeItem('access_token'); window.location.href = '/auth/login'; }}>
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Login
+      </Button>
+    </div>
+  );
+}
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600
+             bg-clip-text text-transparent">
               📝 Content Templates
             </h1>
             <p className="text-gray-600 mt-1">
@@ -338,7 +361,8 @@ export default function TemplatesPage() {
           </div>
         ) : templates.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full 
+            flex items-center justify-center mx-auto mb-4">
               <Sparkles className="h-8 w-8 text-blue-600" />
             </div>
             <h3 className="text-lg font-semibold mb-2">No templates found</h3>
@@ -406,7 +430,6 @@ export default function TemplatesPage() {
   open={showUseModal}
   onOpenChange={setShowUseModal}
   onSuccess={() => {
-    // Refresh posts list or show success message
     toast.success('Post created from template!');
   }}
 />

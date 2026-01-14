@@ -93,7 +93,7 @@ const EventModal: React.FC<EventModalProps> = ({
   const StatusIcon = statusConfig[event.status].icon;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 ">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-gray-200">
@@ -238,9 +238,14 @@ export default function CalendarPage() {
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
 
   // Get date range for current view
-  const dateRange = useMemo(() => {
-    return dateHelpers.getMonthRange(currentDate);
-  }, [currentDate]);
+const dateRange = useMemo(() => {
+  const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  return {
+    start: start.toISOString().split('T')[0],
+    end: end.toISOString().split('T')[0]
+  };
+}, [currentDate]);
 
   // Fetch calendar events
   const { data, isLoading, isError, refetch } = useCalendarEvents(
@@ -792,7 +797,8 @@ export default function CalendarPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-between gap-4 flex-wrap bg-white p-4 rounded-xl border border-gray-200">
+          <div className="flex items-center justify-between gap-4 flex-wrap
+           bg-white p-4 rounded-xl border border-gray-200">
             <div className="flex items-center gap-4">
               {/* Navigation */}
               <div className="flex items-center gap-2">
