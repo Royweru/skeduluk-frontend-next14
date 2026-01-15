@@ -291,22 +291,7 @@ export const usersApi = {
   },
 };
 
-export const paymentsApi = {
-  initiatePayment: async (data: { plan: string; payment_method: string }) => {
-    const response = await api.post('/payments/initiate', data);
-    return response.data;
-  },
-  
-  verifyFlutterwavePayment: async (transactionId: string) => {
-    const response = await api.get(`/payments/verify/flutterwave/${transactionId}`);
-    return response.data;
-  },
-  
-  getSubscriptions: async () => {
-    const response = await api.get('/payments/subscriptions');
-    return response.data;
-  },
-};
+
 
 //Facebook API 
 
@@ -481,6 +466,31 @@ export const analyticsApi = {
     const response = await api.get('/analytics/comparison', {
       params: { days }
     });
+    return response.data;
+  },
+};
+
+//Payments api 
+export const paymentsApi = {
+  initiatePayment: async (data: { plan: string; payment_method: string }) => {
+    const response = await api.post('/payments/initiate', data);
+    return response.data;
+  },
+  
+  // Existing Flutterwave (keep this)
+  verifyFlutterwavePayment: async (transactionId: string) => {
+    const response = await api.get(`/payments/verify/flutterwave/${transactionId}`);
+    return response.data;
+  },
+
+  // ✅ NEW: Add this for Paystack
+  verifyPaystackPayment: async (reference: string) => {
+    const response = await api.get(`/payments/verify/paystack/${reference}`);
+    return response.data;
+  },
+  
+  getSubscriptions: async () => {
+    const response = await api.get('/payments/subscriptions');
     return response.data;
   },
 };
