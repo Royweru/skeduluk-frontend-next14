@@ -1,8 +1,9 @@
+
 // src/lib/api.ts
 import { AnalyticsOverTime, AnalyticsSummary, DashboardAnalytics, FetchAnalyticsResponse, PlatformComparison, TopPerformingPost } from '@/app/types';
 import { AIProvidersInfo, CalendarEventsResponse, EnhancementRequest, EnhancementResponse, FacebookPagesResponse, PostAnalytics, PostTimeResponse, SelectedPageResponse, Template, TemplateAnalytics, TemplateFolder, TemplateSearchParams } from '@/types';
 import axios from 'axios';
-
+import { ApiResponse, OAuthConfig, PlatformConfig, SocialConnection } from "@/types";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Create axios instance
@@ -494,3 +495,56 @@ export const paymentsApi = {
     return response.data;
   },
 };
+
+export class SocialAPI {
+  // Get user's social connections
+ static async getConnections(): Promise<SocialConnection[]> {
+    const response = await fetch(`${API_BASE_URL}/social/connections`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.log('Failed to fetch connections');
+      throw new Error('Failed to fetch connections');
+    }
+
+    const data = await response.json();
+    // Backend returns { connections: [...] }, extract the array
+    return data.connections || [];
+  }
+
+  // Initiate OAuth flow
+  static async initiateOAuth(platform: string): Promise<OAuthConfig> {
+   const response = await api.get(`/social/oauth/${platform}/authorize`);
+      return response.data;
+  }
+
+
+
+  // Disconnect social account
+  static async disconnectAccount(connectionId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/social/connections/${connectionId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to disconnect account');
+    }
+  }
+
+  // Get supported platforms
+  static async getSupportedPlatforms(): Promise<PlatformConfig[]> {
+    const response = await fetch(`${API_BASE_URL}/social/platforms`);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch platforms');
+    }
+
+    return response.json();
+  }
+}

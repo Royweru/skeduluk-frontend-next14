@@ -1,7 +1,7 @@
 // src/hooks/api/use-oauth.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import api from '@/lib/api';
+import api, { SocialAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export function useOAuth() {
@@ -63,10 +63,7 @@ export function useOAuth() {
   }, [queryClient]);
 
   const initiateOAuthMutation = useMutation({
-    mutationFn: async (platform: string) => {
-      const response = await api.get(`/auth/oauth/${platform}/authorize`);
-      return response.data;
-    },
+    mutationFn:SocialAPI.initiateOAuth,
     onMutate: (platform) => {
       setConnectingPlatform(platform);
     },

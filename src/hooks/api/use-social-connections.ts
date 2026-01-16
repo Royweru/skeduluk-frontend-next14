@@ -1,7 +1,7 @@
 // src/hooks/use-social-connections.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SocialConnection, SocialPlatform } from '@/types';
-import { SocialAPI } from '@/services/social-services';
+import { SocialAPI } from '@/lib/api';
 import toast from 'react-hot-toast';
 
 export function useSocialConnections() {
