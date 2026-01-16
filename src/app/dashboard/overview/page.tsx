@@ -55,6 +55,7 @@ import { CreatePostModal } from "@/components/modals/create-post-modal";
 import { useOAuth } from "@/hooks/api/use-oauth";
 import { usePostStatusPolling } from "@/hooks/api/use-post-status";
 import { useQueryClient } from "@tanstack/react-query";
+import { PostCreatorModal } from "@/components/modals/post-creator-modal";
 export default function DashboardOverviewPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -95,6 +96,7 @@ export default function DashboardOverviewPage() {
       icon: Twitter,
       color: "bg-black",
       limit: 280,
+      maxImages: 4,
     },
     {
       id: "facebook",
@@ -102,6 +104,7 @@ export default function DashboardOverviewPage() {
       icon: Facebook,
       color: "bg-blue-600",
       limit: 63206,
+      maxImages: 4,
     },
     {
       id: "linkedin",
@@ -109,6 +112,7 @@ export default function DashboardOverviewPage() {
       icon: Linkedin,
       color: "bg-blue-700",
       limit: 3000,
+      maxImages: 1,
     },
     {
       id: "instagram",
@@ -116,6 +120,7 @@ export default function DashboardOverviewPage() {
       icon: Instagram,
       color: "bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500",
       limit: 2200,
+      maxImages: 4,
     },
     {
       id: "tiktok",
@@ -123,14 +128,16 @@ export default function DashboardOverviewPage() {
       icon: Music,
       color: "bg-black",
       limit: 2200,
+      maxImages: 0,
     },
     {
-       id: 'youtube',
-        name: 'YouTube',
-        icon: Youtube, 
-        color: 'bg-red-600',
-         limit: 5000
-         }
+      id: "youtube",
+      name: "YouTube",
+      icon: Youtube,
+      color: "bg-red-600",
+      limit: 5000,
+      maxImages: 0,
+    },
   ];
 
   const quickStats = [
@@ -688,6 +695,14 @@ export default function DashboardOverviewPage() {
             }
           }}
         />
+     
+
+        {/* <PostCreatorModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          platforms={platforms}
+          connectedPlatforms={connectedPlatforms}
+        /> */}
       </div>
     </div>
   );
