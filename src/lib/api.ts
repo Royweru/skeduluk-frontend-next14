@@ -472,7 +472,7 @@ export const analyticsApi = {
 
 //Payments api 
 export const paymentsApi = {
-  initiatePayment: async (data: { plan: string; payment_method: string }) => {
+  initiatePayment: async (data: { plan: string; payment_method?: string }) => {
     const response = await api.post('/payments/initiate', data);
     return response.data;
   },

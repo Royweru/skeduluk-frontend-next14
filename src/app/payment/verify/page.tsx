@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useVerifyPaystackPayment } from '@/hooks/api/use-payment';
 import { Loader2, XCircle, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button'; // Assuming you have shadcn/ui
+import { Button } from '@/components/ui/button'; 
 import { cn } from '@/lib/utils';
 
 export default function PaymentVerifyPage() {

@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { useAuth } from '@/providers/auth-provider'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
+import { useInitiatePayment } from '@/hooks/api/use-payment'
 
 interface DashboardHeaderProps {
   user: UserType | null
@@ -72,7 +73,7 @@ export function DashboardHeader({ user, onMenuClick, pathname }: DashboardHeader
 
   const userInitials = user?.username?.slice(0, 2).toUpperCase() || 'U'
   const userName = user?.username || 'User'
-
+  const {mutate:initiatePayment, isPending:isInitiatingPayment} =  useInitiatePayment()
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -171,6 +172,14 @@ export function DashboardHeader({ user, onMenuClick, pathname }: DashboardHeader
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+           <Button
+            variant={"secondary"}
+            size={"lg"}
+            onClick={()=>initiatePayment({plan:"basic"})}
+            disabled={isInitiatingPayment}
+           >
+                 Upgrade
+           </Button>
         </div>
       </div>
     </header>
