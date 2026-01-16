@@ -1,52 +1,52 @@
-// src/hooks/api/use-payments.ts
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { paymentsApi } from '@/lib/api';
-import toast from 'react-hot-toast';
+// src/hooks/api/use-payment.ts
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { paymentsApi } from '@/lib/api'; 
+import { useAuth } from '@/providers/auth-provider'; 
 
-// Hook to start the payment process
-export function useInitiatePayment() {
-  return useMutation({
-    mutationFn: paymentsApi.initiatePayment,
-    onSuccess: (data) => {
-      // The backend returns a payment_link. We redirect the user there.
-      if (data.payment_link) {
+export const usePayment = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  
+  // Destructure what we need from your existing auth provider
+  const { user, isAuthenticated } = useAuth(); 
+
+  const initiatePlanSelection = async (planId: string) => {
+    // 1. Guest Logic: If not logged in, send to register with the plan attached
+    if (!isAuthenticated || !user) {
+      toast('Create an account to secure your plan', { icon: '🔐' });
+      // This matches your route structure /auth/register
+      router.push(`/auth/register?plan=${planId}`);
+      return;
+    }
+
+    // 2. Logged-in User Logic: Call your backend API directly
+    setIsLoading(true);
+    const toastId = toast.loading('Initializing secure payment...');
+
+    try {
+      // Using the paymentsApi from your src/lib/api.ts
+      const data = await paymentsApi.initiatePayment({
+        plan: planId,
+        payment_method: 'paystack'
+      });
+
+      if (data.success && data.payment_link) {
+        toast.success('Redirecting to Paystack...', { id: toastId });
+        // Redirect to the Paystack URL returned by backend
         window.location.href = data.payment_link;
       } else {
-        toast.error('Failed to generate payment link');
+        throw new Error(data.error || 'Failed to initialize payment');
       }
-    },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Payment initiation failed');
+    } catch (error: any) {
+      console.error('Payment Error:', error);
+      const message = error.response?.data?.detail || error.message || 'Payment initialization failed';
+      toast.error(message, { id: toastId });
+    } finally {
+      setIsLoading(false);
     }
-  });
-}
+  };
 
-// Hook to verify Paystack payment
-export function useVerifyPaystackPayment() {
-  const queryClient = useQueryClient();
-  const router = useRouter();
-
-  return useMutation({
-    mutationFn: (reference: string) => paymentsApi.verifyPaystackPayment(reference),
-    onSuccess: (data) => {
-      toast.success('Subscription activated successfully!');
-      // Refresh user profile to show new plan immediately
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      // Redirect to the success page
-      router.push('/payment/success'); 
-    },
-    onError: (error: any) => {
-      const msg = error.response?.data?.detail || 'Payment verification failed';
-      toast.error(msg);
-    }
-  });
-}
-
-// Hook to get current subscriptions
-export function useSubscriptions() {
-  return useQuery({
-    queryKey: ['subscriptions'],
-    queryFn: paymentsApi.getSubscriptions,
-  });
-}
+  return { initiatePlanSelection, isLoading };
+};

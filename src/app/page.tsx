@@ -12,7 +12,7 @@ function Home() {
    const { isAuthenticated:isLoggedIn} = useAuth()
   return (
     <div className="min-h-screen font-sans antialiased overflow-x-hidden bg-white">
-      <Navbar isLoggedIn={isLoggedIn} />
+      <Navbar />
       <main>
         <HeroSection />
         <FeaturesSection />
