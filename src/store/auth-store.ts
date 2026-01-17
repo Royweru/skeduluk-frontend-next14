@@ -1,7 +1,7 @@
-// src/store/auth-store.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Keep your existing User interface
 interface User {
   id: number;
   email: string;
@@ -16,6 +16,7 @@ interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  setAuth: (user: User, token: string) => void; 
   login: (username: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
@@ -31,6 +32,12 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isLoading: false,
       isAuthenticated: false,
+
+      // ✅ ADDED: The implementation
+      setAuth: (user: User, token: string) => {
+        localStorage.setItem('access_token', token);
+        set({ user, isAuthenticated: true });
+      },
       
       login: async (username: string, password: string) => {
         set({ isLoading: true });
@@ -50,6 +57,8 @@ export const useAuthStore = create<AuthState>()(
           }
           
           const data = await response.json();
+          // We can use the new action here internally too if we want, 
+          // but keeping your existing logic for safety:
           localStorage.setItem('access_token', data.access_token);
           
           await get().refreshUser();
