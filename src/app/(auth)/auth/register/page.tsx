@@ -13,9 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Eye, EyeOff, Check, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import toast from 'react-hot-toast';
-import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'; // ✅ IMPORT
-
-// ... (Keep your registerSchema and getPasswordStrength logic here exactly as before) ...
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button'; 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(3).max(20).regex(/^[a-zA-Z0-9_]+$/),
