@@ -1,72 +1,38 @@
-import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { paymentsApi } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { paymentsApi } from '@/lib/api'; 
-import { useAuth } from '@/providers/auth-provider'; 
 
-export const usePayment = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false); // New state for verification
+export const useInitiatePayment = () => {
+  return useMutation({
+    mutationFn: (data: { plan: string; payment_method?: string }) =>
+      paymentsApi.initiatePayment(data),
+    onError: (error: any) => {
+      console.error('Payment Init Error:', error);
+      toast.error(error?.response?.data?.detail || 'Failed to initiate payment');
+    },
+  });
+};
+
+export const useVerifyPaystackPayment = () => {
   const router = useRouter();
-  
-  const { user, isAuthenticated } = useAuth(); 
+  const queryClient = useQueryClient();
 
-  // 1. INITIATE (Send user to Paystack)
-  const initiatePlanSelection = async (planId: string) => {
-    if (!isAuthenticated || !user) {
-      toast('Create an account to secure your plan', { icon: '🔐' });
-      router.push(`/auth/register?plan=${planId}`);
-      return;
-    }
+  return useMutation({
+    mutationFn: (reference: string) => paymentsApi.verifyPaystackPayment(reference),
+    onSuccess: (data) => {
+      // 1. Show success message
+      toast.success('Subscription active! Redirecting...');
 
-    setIsLoading(true);
-    const toastId = toast.loading('Initializing secure payment...');
-
-    try {
-      const data = await paymentsApi.initiatePayment({
-        plan: planId,
-        payment_method: 'paystack'
-      });
-
-      if (data.success && data.payment_link) {
-        toast.success('Redirecting to Paystack...', { id: toastId });
-        window.location.href = data.payment_link;
-      } else {
-        throw new Error(data.error || 'Failed to initialize payment');
-      }
-    } catch (error: any) {
-      console.error('Payment Error:', error);
-      const message = error.response?.data?.detail || error.message || 'Payment initialization failed';
-      toast.error(message, { id: toastId });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // 2. VERIFY (Handle return from Paystack)
-  const verifyPayment = async (reference: string) => {
-    setIsVerifying(true);
-    try {
-      const data = await paymentsApi.verifyPaystackPayment(reference);
+      // 2. Refresh user data to update the UI (unlock Pro features immediately)
+      queryClient.invalidateQueries({ queryKey: ['current-user'] });
       
-      if (data.success) {
-        return { success: true, plan: data.plan, subscription_id: data.subscription_id };
-      } else {
-        throw new Error(data.error || 'Payment verification failed');
-      }
-    } catch (error: any) {
-      console.error('Verification Error:', error);
-      const message = error.response?.data?.detail || error.message || 'Could not verify payment';
-      return { success: false, error: message };
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  return { 
-    initiatePlanSelection, 
-    verifyPayment, 
-    isLoading,
-    isVerifying 
-  };
+      // 3. Redirect to success page or dashboard
+      router.push('/payment/success'); 
+    },
+    onError: (error: any) => {
+      console.error('Payment Verify Error:', error);
+      // Let the page handle the UI error state, but we can log it here
+    },
+  });
 };
