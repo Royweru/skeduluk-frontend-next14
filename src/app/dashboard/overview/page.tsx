@@ -648,61 +648,13 @@ export default function DashboardOverviewPage() {
         </div>
 
         {/* Create Post Modal */}
-        <CreatePostModal
-          platforms={platforms}
-          setSelectedPlatforms={setSelectedPlatforms}
-          showCreateModal={showCreateModal}
-          setShowCreateModal={setShowCreateModal}
-          connectedPlatforms={connectedPlatforms}
-          selectedPlatforms={selectedPlatforms}
-          togglePlatform={togglePlatform}
-          postContent={postContent}
-          setPostContent={setPostContent}
-          uploadedImages={uploadedImages}
-          setUploadedImages={setUploadedImages}
-          handleImageUpload={handleImageUpload}
-          scheduledDate={scheduledDate}
-          setScheduledDate={setScheduledDate}
-          onPostCreated={(createdPost:any) => {
-            setShowCreateModal(false);
-            setPostContent("");
-            setSelectedPlatforms([]);
-            setUploadedImages([]);
-            setScheduledDate("");
 
-            // If post is being published immediately, start polling
-            if (!scheduledDate && createdPost?.id) {
-              setPublishingPostId(createdPost.id);
-
-              // Show initial toast
-              toast.loading(
-                `Publishing to ${
-                  createdPost.platforms?.length || 0
-                } platform(s)...`,
-                {
-                  id: "publishing-post",
-                  duration: Infinity,
-                }
-              );
-
-              // Dismiss after a delays
-              setTimeout(() => {
-                toast.dismiss("publishing-post");
-              }, 10000);
-            } else if (scheduledDate) {
-              // Just show scheduled confirmation
-              toast.success(`Post scheduled successfully!`);
-            }
-          }}
-        />
-     
-
-        {/* <PostCreatorModal
+        <PostCreatorModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           platforms={platforms}
           connectedPlatforms={connectedPlatforms}
-        /> */}
+        />
       </div>
     </div>
   );
