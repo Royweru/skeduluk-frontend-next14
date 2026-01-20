@@ -1,4 +1,3 @@
-// src/hooks/api/use-payment.ts
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -7,26 +6,23 @@ import { useAuth } from '@/providers/auth-provider';
 
 export const usePayment = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false); // New state for verification
   const router = useRouter();
   
-  // Destructure what we need from your existing auth provider
   const { user, isAuthenticated } = useAuth(); 
 
+  // 1. INITIATE (Send user to Paystack)
   const initiatePlanSelection = async (planId: string) => {
-    // 1. Guest Logic: If not logged in, send to register with the plan attached
     if (!isAuthenticated || !user) {
       toast('Create an account to secure your plan', { icon: '🔐' });
-      // This matches your route structure /auth/register
       router.push(`/auth/register?plan=${planId}`);
       return;
     }
 
-    // 2. Logged-in User Logic: Call your backend API directly
     setIsLoading(true);
     const toastId = toast.loading('Initializing secure payment...');
 
     try {
-      // Using the paymentsApi from your src/lib/api.ts
       const data = await paymentsApi.initiatePayment({
         plan: planId,
         payment_method: 'paystack'
@@ -34,7 +30,6 @@ export const usePayment = () => {
 
       if (data.success && data.payment_link) {
         toast.success('Redirecting to Paystack...', { id: toastId });
-        // Redirect to the Paystack URL returned by backend
         window.location.href = data.payment_link;
       } else {
         throw new Error(data.error || 'Failed to initialize payment');
@@ -48,5 +43,30 @@ export const usePayment = () => {
     }
   };
 
-  return { initiatePlanSelection, isLoading };
+  // 2. VERIFY (Handle return from Paystack)
+  const verifyPayment = async (reference: string) => {
+    setIsVerifying(true);
+    try {
+      const data = await paymentsApi.verifyPaystackPayment(reference);
+      
+      if (data.success) {
+        return { success: true, plan: data.plan, subscription_id: data.subscription_id };
+      } else {
+        throw new Error(data.error || 'Payment verification failed');
+      }
+    } catch (error: any) {
+      console.error('Verification Error:', error);
+      const message = error.response?.data?.detail || error.message || 'Could not verify payment';
+      return { success: false, error: message };
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  return { 
+    initiatePlanSelection, 
+    verifyPayment, 
+    isLoading,
+    isVerifying 
+  };
 };
