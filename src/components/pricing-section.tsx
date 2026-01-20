@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X, Zap, Crown, ShieldCheck, ArrowRight, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { usePayment } from '@/hooks/api/use-payment'; 
-
+import { useInitiatePayment } from '@/hooks/api/use-payment';
 const plans = [
   {
     id: 'basic',
@@ -41,7 +40,7 @@ const plans = [
 
 export const PricingSection = () => {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  const { initiatePlanSelection, isLoading } = usePayment();
+  const { mutate, isPending:isLoading } = useInitiatePayment();
 
   // Helper to calculate price
   const getPrice = (price: number) => {
@@ -153,7 +152,7 @@ export const PricingSection = () => {
 
               <button
                 disabled={isLoading}
-                onClick={() => initiatePlanSelection(plan.id)}
+                onClick={() => mutate({plan:plan.id})}
                 className={cn(
                   "w-full py-4 rounded-xl font-bold transition-all duration-300 flex items-center justify-center gap-2 group",
                   plan.popular 
