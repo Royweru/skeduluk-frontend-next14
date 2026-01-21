@@ -46,6 +46,7 @@ import {
   usePosts,
 } from "@/hooks/api/use-posts";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import { useDashboardAnalytics } from "@/hooks/api/use-analytics";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
@@ -56,13 +57,19 @@ import { useOAuth } from "@/hooks/api/use-oauth";
 import { usePostStatusPolling } from "@/hooks/api/use-post-status";
 import { useQueryClient } from "@tanstack/react-query";
 import { PostCreatorModal } from "@/components/modals/post-creator-modal";
+import { AISuggestionsPanel } from "@/components/analytics/ai-suggestions-panel";
 export default function DashboardOverviewPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
   const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
+  const { data: analyticsData, isLoading: analyticsLoading } =
+    useDashboardAnalytics(7);
   const enhanceMutation = useEnhanceContent();
+
+  // Extract analytics summary
+  const summary = analyticsData?.summary;
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [postContent, setPostContent] = useState("");
@@ -140,6 +147,17 @@ export default function DashboardOverviewPage() {
     },
   ];
 
+  // Calculate success rate from posts
+  const calculateSuccessRate = () => {
+    if (!posts || posts.length === 0) return "--";
+    const postedCount = posts.filter((p: any) => p.status === "posted").length;
+    const totalWithStatus = posts.filter((p: any) =>
+      ["posted", "failed", "partial"].includes(p.status),
+    ).length;
+    if (totalWithStatus === 0) return "--";
+    return `${Math.round((postedCount / totalWithStatus) * 100)}%`;
+  };
+
   const quickStats = [
     {
       label: "Total Posts",
@@ -161,9 +179,44 @@ export default function DashboardOverviewPage() {
     },
     {
       label: "Success Rate",
-      value: "94%",
+      value: calculateSuccessRate(),
       icon: TrendingUp,
       color: "text-orange-600",
+    },
+  ];
+
+  // Helper to format numbers nicely
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  // Engagement metrics from real analytics
+  const engagementMetrics = [
+    {
+      icon: Eye,
+      label: "Views",
+      value: summary?.total_views ?? 0,
+      isLoading: analyticsLoading,
+    },
+    {
+      icon: Heart,
+      label: "Likes",
+      value: summary?.total_likes ?? 0,
+      isLoading: analyticsLoading,
+    },
+    {
+      icon: MessageCircle,
+      label: "Comments",
+      value: summary?.total_comments ?? 0,
+      isLoading: analyticsLoading,
+    },
+    {
+      icon: Share2,
+      label: "Shares",
+      value: summary?.total_shares ?? 0,
+      isLoading: analyticsLoading,
     },
   ];
 
@@ -181,7 +234,7 @@ export default function DashboardOverviewPage() {
       toast.success(
         username
           ? `Successfully connected to ${connected} as ${username}!`
-          : `Successfully connected to ${connected}!`
+          : `Successfully connected to ${connected}!`,
       );
 
       // Clean up URL
@@ -203,7 +256,7 @@ export default function DashboardOverviewPage() {
   const hasAIProvider =
     aiProviders &&
     Object.values(aiProviders).some(
-      (value, index) => index < 5 && value === true
+      (value, index) => index < 5 && value === true,
     );
 
   useEffect(() => {
@@ -231,7 +284,7 @@ export default function DashboardOverviewPage() {
   const togglePlatform = (platformId: string) => {
     if (!connectedPlatforms.includes(platformId)) {
       toast.error(
-        `${platforms.find((p) => p.id === platformId)?.name} is not connected`
+        `${platforms.find((p) => p.id === platformId)?.name} is not connected`,
       );
       return;
     }
@@ -239,7 +292,7 @@ export default function DashboardOverviewPage() {
     setSelectedPlatforms((prev) =>
       prev.includes(platformId)
         ? prev.filter((p) => p !== platformId)
-        : [...prev, platformId]
+        : [...prev, platformId],
     );
   };
 
@@ -353,7 +406,7 @@ export default function DashboardOverviewPage() {
                   <div
                     className={cn(
                       "p-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100",
-                      stat.color
+                      stat.color,
                     )}
                   >
                     <stat.icon className="h-6 w-6" />
@@ -405,7 +458,7 @@ export default function DashboardOverviewPage() {
                     : // Actual content - show when loaded
                       platforms.map((platform) => {
                         const isConnected = connectedPlatforms.includes(
-                          platform.id
+                          platform.id,
                         );
                         const PlatformIcon = platform.icon;
 
@@ -419,14 +472,15 @@ export default function DashboardOverviewPage() {
                               isConnected
                                 ? "border-green-500 bg-green-50"
                                 : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer hover:shadow-md",
-                              connectingPlatform === platform.id && "opacity-50"
+                              connectingPlatform === platform.id &&
+                                "opacity-50",
                             )}
                           >
                             <div className="flex flex-col items-center gap-2">
                               <div
                                 className={cn(
                                   "p-2 rounded-lg text-white relative",
-                                  platform.color
+                                  platform.color,
                                 )}
                               >
                                 <PlatformIcon className="h-5 w-5" />
@@ -444,8 +498,8 @@ export default function DashboardOverviewPage() {
                                   {isConnected
                                     ? "Connected"
                                     : connectingPlatform === platform.id
-                                    ? "Connecting..."
-                                    : "Click to connect"}
+                                      ? "Connecting..."
+                                      : "Click to connect"}
                                 </p>
                               </div>
                               {isConnected && (
@@ -500,7 +554,7 @@ export default function DashboardOverviewPage() {
                               <div className="flex items-center gap-1">
                                 {post.platforms?.map((p: string) => {
                                   const platform = platforms.find(
-                                    (pl) => pl.id === p.toLowerCase()
+                                    (pl) => pl.id === p.toLowerCase(),
                                   );
                                   if (!platform) return null;
                                   const Icon = platform.icon;
@@ -512,7 +566,7 @@ export default function DashboardOverviewPage() {
                                   <Clock className="h-3 w-3" />
                                   {format(
                                     new Date(post.scheduled_for),
-                                    "MMM d, h:mm a"
+                                    "MMM d, h:mm a",
                                   )}
                                 </div>
                               )}
@@ -527,7 +581,7 @@ export default function DashboardOverviewPage() {
                               post.status === "scheduled" &&
                                 "bg-blue-100 text-blue-800",
                               post.status === "failed" &&
-                                "bg-red-100 text-red-800"
+                                "bg-red-100 text-red-800",
                             )}
                           >
                             {post.status}
@@ -560,49 +614,62 @@ export default function DashboardOverviewPage() {
             {/* Engagement Overview */}
             <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
               <CardHeader>
-                <CardTitle>Engagement</CardTitle>
-                <CardDescription>Last 7 days</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Engagement</CardTitle>
+                    <CardDescription>Last 7 days</CardDescription>
+                  </div>
+                  {summary && summary.avg_engagement_rate > 0 && (
+                    <Badge variant="secondary" className="text-xs">
+                      {summary.avg_engagement_rate.toFixed(1)}% avg rate
+                    </Badge>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { icon: Eye, label: "Views", value: "12.5K", change: "+12%" },
-                  {
-                    icon: Heart,
-                    label: "Likes",
-                    value: "8.7K",
-                    change: "+18%",
-                  },
-                  {
-                    icon: MessageCircle,
-                    label: "Comments",
-                    value: "1.2K",
-                    change: "+7%",
-                  },
-                  {
-                    icon: Share2,
-                    label: "Shares",
-                    value: "856",
-                    change: "+22%",
-                  },
-                ].map((metric) => (
-                  <div
-                    key={metric.label}
-                    className="flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
-                        <metric.icon className="h-4 w-4 text-blue-600" />
+                {analyticsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="animate-pulse flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-gray-200 rounded-lg" />
+                          <div className="w-16 h-4 bg-gray-200 rounded" />
+                        </div>
+                        <div className="w-12 h-4 bg-gray-200 rounded" />
                       </div>
-                      <span className="text-sm font-medium">
-                        {metric.label}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold">{metric.value}</p>
-                      <p className="text-xs text-green-600">{metric.change}</p>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  engagementMetrics.map((metric) => (
+                    <div
+                      key={metric.label}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
+                          <metric.icon className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-sm font-medium">
+                          {metric.label}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">
+                          {formatNumber(metric.value)}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {!analyticsLoading && summary?.total_posts === 0 && (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    <p>Publish posts to see engagement data</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -644,6 +711,9 @@ export default function DashboardOverviewPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* AI Suggestions */}
+            <AISuggestionsPanel days={7} compact />
           </div>
         </div>
 

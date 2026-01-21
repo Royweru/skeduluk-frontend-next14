@@ -104,19 +104,6 @@ export function useTestAIProviders() {
   });
 }
 
-// Transcribe Audio Hook
-export function useTranscribeAudio() {
-  return useMutation({
-    mutationFn: postsApi.transcribeAudio,
-    onSuccess: () => {
-      toast.success('🎤 Audio transcribed successfully!');
-    },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || 'Failed to transcribe audio';
-      toast.error(errorMessage);
-    },
-  });
-}
 
 // Get Posts Hook
 export function usePosts(params?: { skip?: number; limit?: number; status?: string }) {
