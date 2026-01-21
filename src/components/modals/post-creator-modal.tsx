@@ -1,20 +1,25 @@
 // components/post-creator/PostCreatorModal.tsx
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Send, X, Loader2, Zap, AlertCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { useCreatePost, useAIProviders } from '@/hooks/api/use-posts';
-import { useFacebookPages } from '@/hooks/api/use-facebook';
-import { PlatformSelector } from '../post-creator/platform-selector';
-import { ContentEditor } from '../post-creator/content-editor';
-import { PlatformCustomizer } from '../post-creator/platform-customizer';
-import { AIEnhancementPanel } from '../post-creator/ai-enhancement-panel';
-import { SchedulePicker } from '../post-creator/schedule-picker';
-import { usePostCreatorState } from '@/hooks/use-post-creator-state';
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Send, X, Loader2, Zap, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
+import { useCreatePost, useAIProviders } from "@/hooks/api/use-posts";
+import { useFacebookPages } from "@/hooks/api/use-facebook";
+import { PlatformSelector } from "../post-creator/platform-selector";
+import { ContentEditor } from "../post-creator/content-editor";
+import { PlatformCustomizer } from "../post-creator/platform-customizer";
+import { AIEnhancementPanel } from "../post-creator/ai-enhancement-panel";
+import { SchedulePicker } from "../post-creator/schedule-picker";
+import { usePostCreatorState } from "@/hooks/use-post-creator-state";
 
 interface PostCreatorModalProps {
   isOpen: boolean;
@@ -30,129 +35,143 @@ interface PostCreatorModalProps {
   connectedPlatforms: string[];
 }
 
-export function PostCreatorModal({ 
-  isOpen, 
-  onClose, 
-  platforms, 
-  connectedPlatforms 
+export function PostCreatorModal({
+  isOpen,
+  onClose,
+  platforms,
+  connectedPlatforms,
 }: PostCreatorModalProps) {
-  const [activeTab, setActiveTab] = useState('compose');
+  const [activeTab, setActiveTab] = useState("compose");
   const state = usePostCreatorState();
   const createMutation = useCreatePost();
   const { data: aiProviders } = useAIProviders();
   const { data: facebookPages } = useFacebookPages();
 
-  const hasAIProvider = aiProviders && Object.values(aiProviders).some(
-    (value, index) => index < 5 && value === true
-  );
+  const hasAIProvider =
+    aiProviders &&
+    Object.values(aiProviders).some(
+      (value, index) => index < 5 && value === true,
+    );
 
   const handleSubmit = async () => {
     if (!state.content.trim()) {
-      toast.error('Please add content');
+      toast.error("Please add content");
       return;
     }
 
     if (state.selectedPlatforms.length === 0) {
-      toast.error('Please select at least one platform');
+      toast.error("Please select at least one platform");
       return;
     }
 
     // Validate character limits
-    const violations = state.selectedPlatforms.filter(platformId => {
-      const platform = platforms.find(p => p.id === platformId);
+    const violations = state.selectedPlatforms.filter((platformId) => {
+      const platform = platforms.find((p) => p.id === platformId);
       if (!platform) return false;
-      const text = state.customizePerPlatform 
-        ? (state.platformSpecific[platformId]?.text || '') 
+      const text = state.customizePerPlatform
+        ? state.platformSpecific[platformId]?.text || ""
         : state.content;
       return text.length > platform.limit;
     });
 
     if (violations.length > 0) {
-      toast.error('Some platforms exceed character limits');
+      toast.error("Some platforms exceed character limits");
       return;
     }
 
     // Facebook page validation
-    if (state.selectedPlatforms.includes('facebook')) {
-      const selectedPage = facebookPages?.pages?.find(p => p.is_selected);
+    if (state.selectedPlatforms.includes("facebook")) {
+      const selectedPage = facebookPages?.pages?.find((p) => p.is_selected);
       if (!selectedPage) {
-        toast.error('Please select a Facebook Page in Social Connections');
+        toast.error("Please select a Facebook Page in Social Connections");
         return;
       }
     }
 
     try {
       const formData = new FormData();
-      formData.append('original_content', state.content);
-      formData.append('platforms', JSON.stringify(state.selectedPlatforms));
+      formData.append("original_content", state.content);
+      formData.append("platforms", JSON.stringify(state.selectedPlatforms));
 
       if (state.scheduledDate) {
-        formData.append('scheduled_for', new Date(state.scheduledDate).toISOString());
+        formData.append(
+          "scheduled_for",
+          new Date(state.scheduledDate).toISOString(),
+        );
       }
 
       // Enhanced content
       let finalEnhanced: Record<string, string> = {};
-      
+
       if (state.customizePerPlatform) {
-        state.selectedPlatforms.forEach(platformId => {
+        state.selectedPlatforms.forEach((platformId) => {
           if (state.platformSpecific[platformId]?.text) {
             finalEnhanced[platformId] = state.platformSpecific[platformId].text;
           }
         });
       } else if (state.aiEnhancements.length > 0 && state.selectedEnhancement) {
-        finalEnhanced = state.aiEnhancements.reduce((acc, enh) => ({
-          ...acc,
-          [enh.platform.toLowerCase()]: enh.enhanced_content
-        }), {});
+        finalEnhanced = state.aiEnhancements.reduce(
+          (acc, enh) => ({
+            ...acc,
+            [enh.platform.toLowerCase()]: enh.enhanced_content,
+          }),
+          {},
+        );
       }
-      
+
       if (Object.keys(finalEnhanced).length > 0) {
-        formData.append('enhanced_content', JSON.stringify(finalEnhanced));
+        formData.append("enhanced_content", JSON.stringify(finalEnhanced));
       }
 
       // Media handling
       const addedMedia = new Set<File>();
-      
+
       if (state.customizePerPlatform) {
-        state.selectedPlatforms.forEach(platformId => {
+        state.selectedPlatforms.forEach((platformId) => {
           const media = state.platformSpecific[platformId]?.media || [];
-          media.forEach(file => {
+          media.forEach((file) => {
             if (!addedMedia.has(file)) {
-              formData.append(file.type.startsWith('image/') ? 'images' : 'videos', file);
+              formData.append(
+                file.type.startsWith("image/") ? "images" : "videos",
+                file,
+              );
               addedMedia.add(file);
             }
           });
         });
       } else {
-        state.uploadedMedia.forEach(file => {
-          formData.append(file.type.startsWith('image/') ? 'images' : 'videos', file);
+        state.uploadedMedia.forEach((file) => {
+          formData.append(
+            file.type.startsWith("image/") ? "images" : "videos",
+            file,
+          );
         });
       }
 
       await createMutation.mutateAsync(formData);
-      
+
       state.reset();
       onClose();
-      
-      toast.success(state.scheduledDate 
-        ? `📅 Scheduled for ${new Date(state.scheduledDate).toLocaleString()}`
-        : '🚀 Publishing now!'
+
+      toast.success(
+        state.scheduledDate
+          ? `📅 Scheduled for ${new Date(state.scheduledDate).toLocaleString()}`
+          : "🚀 Publishing now!",
       );
-      
     } catch (error: any) {
       if (error.response?.status === 413) {
-        toast.error('Files too large. Reduce file sizes and try again');
+        toast.error("Files too large. Reduce file sizes and try again");
       } else if (error.response?.status === 400) {
-        toast.error(error.response?.data?.detail || 'Validation error');
+        toast.error(error.response?.data?.detail || "Validation error");
       } else {
-        toast.error('Failed to create post. Please try again');
+        toast.error("Failed to create post. Please try again");
       }
     }
   };
 
   const handleClose = () => {
     if (state.content.trim() || state.uploadedMedia.length > 0) {
-      const confirmed = confirm('You have unsaved changes. Close anyway?');
+      const confirmed = confirm("You have unsaved changes. Close anyway?");
       if (!confirmed) return;
     }
     state.reset();
@@ -182,7 +201,11 @@ export function PostCreatorModal({
             </div>
           </DialogHeader>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col min-h-0 overflow-hidden"
+          >
             <TabsList className="mx-6 my-4 grid grid-cols-3 gap-2">
               <TabsTrigger value="compose" className="gap-2">
                 ✍️ Compose
@@ -195,28 +218,31 @@ export function PostCreatorModal({
               </TabsTrigger>
             </TabsList>
 
-            <ScrollArea className="flex-1 px-6 pb-6">
+            <ScrollArea className="flex-1 h-0 px-6 pb-6">
               <TabsContent value="compose" className="space-y-6 mt-0">
                 {!hasAIProvider && (
                   <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2">
                     <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-sm font-semibold text-amber-900">No AI Provider Configured</p>
+                      <p className="text-sm font-semibold text-amber-900">
+                        No AI Provider Configured
+                      </p>
                       <p className="text-xs text-amber-700 mt-1">
-                        Configure Groq, Gemini, or OpenAI in settings to unlock AI features
+                        Configure Groq, Gemini, or OpenAI in settings to unlock
+                        AI features
                       </p>
                     </div>
                   </div>
                 )}
 
-                <PlatformSelector 
+                <PlatformSelector
                   platforms={platforms}
                   connectedPlatforms={connectedPlatforms}
                   selectedPlatforms={state.selectedPlatforms}
                   onToggle={state.togglePlatform}
                 />
 
-                <ContentEditor 
+                <ContentEditor
                   content={state.content}
                   setContent={state.setContent}
                   selectedPlatforms={state.selectedPlatforms}
@@ -246,20 +272,27 @@ export function PostCreatorModal({
                 {state.selectedPlatforms.length === 0 ? (
                   <div className="text-center py-16">
                     <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No platforms selected</h3>
+                    <h3 className="text-lg font-semibold mb-2">
+                      No platforms selected
+                    </h3>
                     <p className="text-sm text-gray-600 mb-4">
                       Select at least one platform to customize content
                     </p>
-                    <Button onClick={() => setActiveTab('compose')} variant="outline">
+                    <Button
+                      onClick={() => setActiveTab("compose")}
+                      variant="outline"
+                    >
                       Select Platforms
                     </Button>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {state.selectedPlatforms.map(platformId => {
-                      const platform = platforms.find(p => p.id === platformId);
+                    {state.selectedPlatforms.map((platformId) => {
+                      const platform = platforms.find(
+                        (p) => p.id === platformId,
+                      );
                       if (!platform) return null;
-                      
+
                       return (
                         <PlatformCustomizer
                           key={platformId}
@@ -300,8 +333,8 @@ export function PostCreatorModal({
             <Button
               onClick={handleSubmit}
               disabled={
-                !state.content.trim() || 
-                state.selectedPlatforms.length === 0 || 
+                !state.content.trim() ||
+                state.selectedPlatforms.length === 0 ||
                 createMutation.isPending
               }
               className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg"
@@ -309,12 +342,12 @@ export function PostCreatorModal({
               {createMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {state.scheduledDate ? 'Scheduling...' : 'Publishing...'}
+                  {state.scheduledDate ? "Scheduling..." : "Publishing..."}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  {state.scheduledDate ? 'Schedule Post' : 'Publish Now'}
+                  {state.scheduledDate ? "Schedule Post" : "Publish Now"}
                 </>
               )}
             </Button>
