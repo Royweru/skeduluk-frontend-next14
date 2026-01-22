@@ -1,10 +1,12 @@
-'use client';
+"use client";
 
-import { useState, useRef } from 'react';
-import { Mic, Square, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
+import { useState, useRef } from "react";
+import { Mic, Square, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
+
+import { useTranscribeAudio } from "@/hooks/api/use-media";
 
 interface AudioRecorderProps {
   onTranscriptionComplete: (text: string) => void;
@@ -12,12 +14,12 @@ interface AudioRecorderProps {
 
 export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const { mutateAsync: transcribe } = useTranscribeAudio();
   const [transcribing, setTranscribing] = useState(false);
   const [duration, setDuration] = useState(0);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
 
   const startRecording = async () => {
     try {
@@ -31,9 +33,9 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
         await handleTranscription(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       mediaRecorder.start();
@@ -42,12 +44,12 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
 
       // Update duration every second
       intervalRef.current = setInterval(() => {
-        setDuration(prev => prev + 1);
+        setDuration((prev) => prev + 1);
       }, 1000);
 
-      toast.success('Recording started');
+      toast.success("Recording started");
     } catch (error) {
-      toast.error('Microphone access denied');
+      toast.error("Microphone access denied");
     }
   };
 
@@ -63,22 +65,20 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
 
   const handleTranscription = async (audioBlob: Blob) => {
     setTranscribing(true);
-    const formData = new FormData();
-    formData.append('audio', audioBlob, 'recording.webm');
-
     try {
-      const response = await fetch('/api/posts/transcribe', {
-        method: 'POST',
-        body: formData,
+      const result = await transcribe({
+        audio: audioBlob,
+        auto_proofread: true,
       });
 
-      if (!response.ok) throw new Error('Transcription failed');
-
-      const data = await response.json();
-      onTranscriptionComplete(data.transcription);
-      toast.success('Transcription complete!');
+      if (result.success && result.transcription) {
+        onTranscriptionComplete(result.transcription);
+        toast.success("Transcription complete!");
+      } else {
+        throw new Error("Transcription failed");
+      }
     } catch (error) {
-      toast.error('Failed to transcribe audio');
+      toast.error("Failed to transcribe audio");
     } finally {
       setTranscribing(false);
       setDuration(0);
@@ -88,7 +88,7 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -101,7 +101,7 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
         className={cn(
           "w-full h-24 flex flex-col gap-2 transition-all",
           isRecording && "border-red-500 bg-red-50 animate-pulse",
-          transcribing && "opacity-60"
+          transcribing && "opacity-60",
         )}
       >
         {transcribing ? (
@@ -114,7 +114,9 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
             <Square className="h-8 w-8 text-red-600" />
             <div className="flex flex-col items-center">
               <span className="text-sm font-semibold">Stop Recording</span>
-              <span className="text-xs text-red-600">{formatDuration(duration)}</span>
+              <span className="text-xs text-red-600">
+                {formatDuration(duration)}
+              </span>
             </div>
           </>
         ) : (
