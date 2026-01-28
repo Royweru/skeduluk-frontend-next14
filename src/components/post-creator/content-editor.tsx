@@ -1,14 +1,15 @@
 // components/post-creator/ContentEditor.tsx
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Hash, Wand2, TrendingUp, Mic, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ToneSelector } from './tone-selector';
-import { HashtagGenerator } from './hashtag-generator';
-import { MediaUploadZone } from './media-upload-zone';
-import { VoiceRecorder } from './voice-recorder';
+"use client";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Hash, Wand2, TrendingUp, Mic, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ToneSelector } from "./tone-selector";
+import { HashtagGenerator } from "./hashtag-generator";
+import { MediaUploadZone } from "./media-upload-zone";
+import { VoiceRecorder } from "./voice-recorder";
 
 interface ContentEditorProps {
   content: string;
@@ -63,14 +64,15 @@ export function ContentEditor({
   dragActive,
   setDragActive,
 }: ContentEditorProps) {
-  
   // Calculate character stats
   const getMaxLength = () => {
     if (selectedPlatforms.length === 0) return 3000;
-    return Math.min(...selectedPlatforms.map(id => {
-      const platform = platforms.find(p => p.id === id);
-      return platform?.limit || 3000;
-    }));
+    return Math.min(
+      ...selectedPlatforms.map((id) => {
+        const platform = platforms.find((p) => p.id === id);
+        return platform?.limit || 3000;
+      }),
+    );
   };
 
   const maxLength = getMaxLength();
@@ -81,14 +83,14 @@ export function ContentEditor({
 
   const handleVoiceTranscription = (transcription: string) => {
     if (content) {
-      setContent(content + '\n\n' + transcription);
+      setContent(content + "\n\n" + transcription);
     } else {
       setContent(transcription);
     }
   };
 
   const insertHashtag = (hashtag: string) => {
-    setContent(content + ' ' + hashtag);
+    setContent(content + " " + hashtag);
   };
 
   return (
@@ -126,7 +128,8 @@ export function ContentEditor({
               onClick={() => setCustomizePerPlatform(!customizePerPlatform)}
               className={cn(
                 "transition-all",
-                customizePerPlatform && "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md"
+                customizePerPlatform &&
+                  "bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md",
               )}
             >
               {customizePerPlatform ? "✓ Enabled" : "Enable"}
@@ -144,7 +147,7 @@ export function ContentEditor({
                 <Wand2 className="h-4 w-4 text-purple-600" />
                 Post Content *
               </Label>
-              
+
               {/* AI Action Buttons */}
               {hasAIProvider && selectedPlatforms.length > 0 && (
                 <div className="flex gap-2">
@@ -162,7 +165,7 @@ export function ContentEditor({
                     )}
                     <span className="hidden sm:inline">Hashtags</span>
                   </Button>
-                  
+
                   <Button
                     onClick={onEnhance}
                     disabled={!content.trim() || isEnhancing}
@@ -184,7 +187,7 @@ export function ContentEditor({
                 </div>
               )}
             </div>
-            
+
             {/* Textarea */}
             <div className="relative">
               <Textarea
@@ -194,10 +197,10 @@ export function ContentEditor({
                 className={cn(
                   "min-h-[200px] resize-none text-base leading-relaxed transition-all",
                   "focus:ring-2 focus:ring-purple-500 focus:border-transparent",
-                  isOver && "border-red-500 bg-red-50/50 focus:ring-red-500"
+                  isOver && "border-red-500 bg-red-50/50 focus:ring-red-500",
                 )}
               />
-              
+
               {/* Floating character count */}
               {content && (
                 <div className="absolute bottom-3 right-3">
@@ -205,10 +208,13 @@ export function ContentEditor({
                     variant={isOver ? "destructive" : "outline"}
                     className={cn(
                       "font-mono text-xs transition-all",
-                      isNear && !isOver && "bg-yellow-50 border-yellow-500 text-yellow-700"
+                      isNear &&
+                        !isOver &&
+                        "bg-yellow-50 border-yellow-500 text-yellow-700",
                     )}
                   >
-                    {currentLength.toLocaleString()} / {maxLength.toLocaleString()}
+                    {currentLength.toLocaleString()} /{" "}
+                    {maxLength.toLocaleString()}
                   </Badge>
                 </div>
               )}
@@ -222,11 +228,11 @@ export function ContentEditor({
                     className={cn(
                       "h-full transition-all duration-500 ease-out",
                       "bg-gradient-to-r",
-                      isOver 
-                        ? "from-red-500 to-red-600 animate-pulse" 
-                        : isNear 
-                        ? "from-yellow-400 to-orange-500" 
-                        : "from-blue-500 via-purple-500 to-pink-500"
+                      isOver
+                        ? "from-red-500 to-red-600 animate-pulse"
+                        : isNear
+                          ? "from-yellow-400 to-orange-500"
+                          : "from-blue-500 via-purple-500 to-pink-500",
                     )}
                     style={{ width: `${Math.min(percentage, 100)}%` }}
                   />
@@ -234,25 +240,31 @@ export function ContentEditor({
 
                 {/* Platform-specific badges */}
                 <div className="flex flex-wrap gap-2">
-                  {selectedPlatforms.map(platformId => {
-                    const platform = platforms.find(p => p.id === platformId);
+                  {selectedPlatforms.map((platformId) => {
+                    const platform = platforms.find((p) => p.id === platformId);
                     if (!platform) return null;
-                    
+
                     const platformOver = currentLength > platform.limit;
-                    const platformNear = (currentLength / platform.limit) * 100 > 90;
-                    
+                    const platformNear =
+                      (currentLength / platform.limit) * 100 > 90;
+
                     return (
                       <Badge
                         key={platformId}
                         variant="outline"
                         className={cn(
                           "text-xs font-mono px-3 py-1 transition-all",
-                          platformOver && "border-red-500 bg-red-50 text-red-700 animate-pulse",
-                          platformNear && !platformOver && "border-yellow-500 bg-yellow-50 text-yellow-700",
-                          !platformNear && "border-gray-300 hover:border-blue-400"
+                          platformOver &&
+                            "border-red-500 bg-red-50 text-red-700 animate-pulse",
+                          platformNear &&
+                            !platformOver &&
+                            "border-yellow-500 bg-yellow-50 text-yellow-700",
+                          !platformNear &&
+                            "border-gray-300 hover:border-blue-400",
                         )}
                       >
-                        {platform.name}: {currentLength.toLocaleString()}/{platform.limit.toLocaleString()}
+                        {platform.name}: {currentLength.toLocaleString()}/
+                        {platform.limit.toLocaleString()}
                       </Badge>
                     );
                   })}

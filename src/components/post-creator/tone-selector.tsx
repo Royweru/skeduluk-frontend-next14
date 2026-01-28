@@ -1,43 +1,44 @@
 // components/post-creator/ToneSelector.tsx
-import { Button } from '@/components/ui/button';
-import { Wand2, ChevronDown, ChevronUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
+"use client";
+import { Button } from "@/components/ui/button";
+import { Wand2, ChevronDown, ChevronUp } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const TONES = [
-  { 
-    value: 'engaging', 
-    label: 'Engaging', 
-    icon: '✨', 
-    desc: 'Captivating and energetic',
-    gradient: 'from-purple-500 to-pink-500'
+  {
+    value: "engaging",
+    label: "Engaging",
+    icon: "✨",
+    desc: "Captivating and energetic",
+    gradient: "from-purple-500 to-pink-500",
   },
-  { 
-    value: 'professional', 
-    label: 'Professional', 
-    icon: '💼', 
-    desc: 'Formal and authoritative',
-    gradient: 'from-blue-600 to-indigo-600'
+  {
+    value: "professional",
+    label: "Professional",
+    icon: "💼",
+    desc: "Formal and authoritative",
+    gradient: "from-blue-600 to-indigo-600",
   },
-  { 
-    value: 'casual', 
-    label: 'Casual', 
-    icon: '😊', 
-    desc: 'Relaxed and friendly',
-    gradient: 'from-green-500 to-emerald-500'
+  {
+    value: "casual",
+    label: "Casual",
+    icon: "😊",
+    desc: "Relaxed and friendly",
+    gradient: "from-green-500 to-emerald-500",
   },
-  { 
-    value: 'humorous', 
-    label: 'Humorous', 
-    icon: '😄', 
-    desc: 'Witty and playful',
-    gradient: 'from-yellow-500 to-orange-500'
+  {
+    value: "humorous",
+    label: "Humorous",
+    icon: "😄",
+    desc: "Witty and playful",
+    gradient: "from-yellow-500 to-orange-500",
   },
-  { 
-    value: 'inspirational', 
-    label: 'Inspirational', 
-    icon: '🚀', 
-    desc: 'Motivating and uplifting',
-    gradient: 'from-red-500 to-pink-500'
+  {
+    value: "inspirational",
+    label: "Inspirational",
+    icon: "🚀",
+    desc: "Motivating and uplifting",
+    gradient: "from-red-500 to-pink-500",
   },
 ];
 
@@ -54,12 +55,12 @@ export function ToneSelector({
   showToneSelector,
   setShowToneSelector,
 }: ToneSelectorProps) {
-  const currentTone = TONES.find(t => t.value === selectedTone);
+  const currentTone = TONES.find((t) => t.value === selectedTone);
 
   return (
     <div className="rounded-xl overflow-hidden border-2 border-purple-200 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 shadow-sm hover:shadow-md transition-all">
       {/* Header */}
-      <div 
+      <div
         className="p-4 cursor-pointer select-none bg-white/50 backdrop-blur-sm"
         onClick={() => setShowToneSelector(!showToneSelector)}
       >
@@ -79,16 +80,12 @@ export function ToneSelector({
                     {currentTone.label} - {currentTone.desc}
                   </>
                 ) : (
-                  'Select a tone for AI enhancement'
+                  "Select a tone for AI enhancement"
                 )}
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="hover:bg-purple-100"
-          >
+          <Button variant="ghost" size="sm" className="hover:bg-purple-100">
             {showToneSelector ? (
               <ChevronUp className="h-4 w-4 text-purple-600" />
             ) : (
@@ -114,15 +111,17 @@ export function ToneSelector({
                   "hover:shadow-lg hover:scale-105 active:scale-95",
                   selectedTone === tone.value
                     ? "border-purple-500 bg-white shadow-lg ring-2 ring-purple-200"
-                    : "border-white/50 bg-white/80 hover:border-purple-300"
+                    : "border-white/50 bg-white/80 hover:border-purple-300",
                 )}
               >
                 {/* Gradient overlay on hover */}
-                <div className={cn(
-                  "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br",
-                  tone.gradient
-                )} />
-                
+                <div
+                  className={cn(
+                    "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br",
+                    tone.gradient,
+                  )}
+                />
+
                 <div className="relative">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-2xl">{tone.icon}</span>
@@ -144,7 +143,8 @@ export function ToneSelector({
           {/* Helper text */}
           <div className="mt-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
             <p className="text-xs text-blue-700">
-              💡 <strong>Tip:</strong> AI will adapt your content to match the selected tone while optimizing for each platform's best practices.
+              💡 <strong>Tip:</strong> AI will adapt your content to match the
+              selected tone while optimizing for each platform's best practices.
             </p>
           </div>
         </div>

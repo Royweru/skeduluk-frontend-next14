@@ -1,7 +1,8 @@
 // components/post-creator/MediaUploadZone.tsx
-import { Upload, Image, Video, FileVideo, FileImage } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { MediaPreview } from './media-preview';
+"use client";
+import { Upload, Image, Video, FileVideo, FileImage } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { MediaPreview } from "./media-preview";
 
 interface MediaUploadZoneProps {
   uploadedMedia: File[];
@@ -18,9 +19,8 @@ export function MediaUploadZone({
   onMediaRemove,
   dragActive,
   setDragActive,
-  platformId
+  platformId,
 }: MediaUploadZoneProps) {
-  
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -35,16 +35,20 @@ export function MediaUploadZone({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files?.[0]) {
       onMediaUpload(e.dataTransfer.files);
     }
   };
 
-  const inputId = platformId ? `media-${platformId}` : 'media-upload';
-  
-  const imageCount = uploadedMedia.filter(f => f.type.startsWith('image/')).length;
-  const videoCount = uploadedMedia.filter(f => f.type.startsWith('video/')).length;
+  const inputId = platformId ? `media-${platformId}` : "media-upload";
+
+  const imageCount = uploadedMedia.filter((f) =>
+    f.type.startsWith("image/"),
+  ).length;
+  const videoCount = uploadedMedia.filter((f) =>
+    f.type.startsWith("video/"),
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -53,11 +57,11 @@ export function MediaUploadZone({
         Media Files
         {uploadedMedia.length > 0 && (
           <Badge variant="secondary" className="ml-auto text-xs">
-            {uploadedMedia.length} file{uploadedMedia.length !== 1 ? 's' : ''}
+            {uploadedMedia.length} file{uploadedMedia.length !== 1 ? "s" : ""}
           </Badge>
         )}
       </label>
-      
+
       {/* Drop Zone */}
       <div
         onDragEnter={handleDrag}
@@ -67,9 +71,9 @@ export function MediaUploadZone({
         className={cn(
           "relative border-2 border-dashed rounded-2xl p-10 text-center transition-all cursor-pointer group",
           "hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50",
-          dragActive 
-            ? "border-blue-500 bg-blue-50 scale-[1.02] shadow-lg ring-4 ring-blue-200" 
-            : "border-gray-300 hover:border-blue-400"
+          dragActive
+            ? "border-blue-500 bg-blue-50 scale-[1.02] shadow-lg ring-4 ring-blue-200"
+            : "border-gray-300 hover:border-blue-400",
         )}
       >
         <input
@@ -80,23 +84,25 @@ export function MediaUploadZone({
           className="hidden"
           id={inputId}
         />
-        
+
         <label htmlFor={inputId} className="cursor-pointer">
-          <div className={cn(
-            "mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all",
-            "bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg group-hover:scale-110",
-            dragActive && "scale-110 rotate-12"
-          )}>
+          <div
+            className={cn(
+              "mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all",
+              "bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg group-hover:scale-110",
+              dragActive && "scale-110 rotate-12",
+            )}
+          >
             <Upload className="h-8 w-8 text-white" />
           </div>
-          
+
           <p className="text-base font-semibold text-gray-700 mb-2">
-            {dragActive ? '📦 Drop files here!' : '📁 Drag & drop files here'}
+            {dragActive ? "📦 Drop files here!" : "📁 Drag & drop files here"}
           </p>
           <p className="text-sm text-gray-500 mb-3">
             or click to browse your files
           </p>
-          
+
           <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <FileImage className="h-3 w-3 text-blue-500" />
@@ -119,11 +125,11 @@ export function MediaUploadZone({
               Uploaded ({uploadedMedia.length})
             </p>
             <p className="text-xs text-gray-500">
-              {imageCount} image{imageCount !== 1 ? 's' : ''} • {' '}
-              {videoCount} video{videoCount !== 1 ? 's' : ''}
+              {imageCount} image{imageCount !== 1 ? "s" : ""} • {videoCount}{" "}
+              video{videoCount !== 1 ? "s" : ""}
             </p>
           </div>
-          
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {uploadedMedia.map((file, idx) => (
               <MediaPreview
@@ -140,9 +146,22 @@ export function MediaUploadZone({
   );
 }
 
-function Badge({ children, variant = "default", className = "" }: { children: React.ReactNode; variant?: string; className?: string }) {
+function Badge({
+  children,
+  variant = "default",
+  className = "",
+}: {
+  children: React.ReactNode;
+  variant?: string;
+  className?: string;
+}) {
   return (
-    <span className={cn("inline-flex items-center px-2 py-1 rounded-md text-xs font-medium", className)}>
+    <span
+      className={cn(
+        "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
+        className,
+      )}
+    >
       {children}
     </span>
   );

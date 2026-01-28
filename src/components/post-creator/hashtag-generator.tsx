@@ -1,9 +1,10 @@
 // components/post-creator/HashtagGenerator.tsx
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Hash, Plus, Copy } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
+"use client";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Hash, Plus, Copy } from "lucide-react";
+import toast from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 interface HashtagGeneratorProps {
   hashtags: string[];
@@ -11,26 +12,26 @@ interface HashtagGeneratorProps {
   onInsertSingle: (hashtag: string) => void;
 }
 
-export function HashtagGenerator({ 
-  hashtags, 
-  onInsert, 
-  onInsertSingle 
+export function HashtagGenerator({
+  hashtags,
+  onInsert,
+  onInsertSingle,
 }: HashtagGeneratorProps) {
   const copyHashtag = async (hashtag: string) => {
     try {
       await navigator.clipboard.writeText(hashtag);
       toast.success(`Copied ${hashtag}!`);
     } catch (error) {
-      toast.error('Failed to copy');
+      toast.error("Failed to copy");
     }
   };
 
   const copyAllHashtags = async () => {
     try {
-      await navigator.clipboard.writeText(hashtags.join(' '));
-      toast.success('All hashtags copied!');
+      await navigator.clipboard.writeText(hashtags.join(" "));
+      toast.success("All hashtags copied!");
     } catch (error) {
-      toast.error('Failed to copy');
+      toast.error("Failed to copy");
     }
   };
 
@@ -51,7 +52,7 @@ export function HashtagGenerator({
             </p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
           <Button
             onClick={copyAllHashtags}
@@ -88,13 +89,13 @@ export function HashtagGenerator({
               "bg-white border-2 border-blue-200",
               "hover:border-blue-500 hover:bg-blue-50 hover:shadow-md",
               "active:scale-95",
-              "cursor-pointer select-none"
+              "cursor-pointer select-none",
             )}
           >
             <span className="font-medium text-sm text-blue-800 group-hover:text-blue-900">
               {hashtag}
             </span>
-            
+
             {/* Hover tooltip */}
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
               Click to add • Right-click to copy
@@ -106,7 +107,8 @@ export function HashtagGenerator({
       {/* Info */}
       <div className="mt-3 p-2.5 rounded-lg bg-blue-100/50 border border-blue-200">
         <p className="text-xs text-blue-700 leading-relaxed">
-          💡 <strong>Pro tip:</strong> Click a hashtag to add it individually, or use "Add to Post" for all. Right-click to copy.
+          💡 <strong>Pro tip:</strong> Click a hashtag to add it individually,
+          or use "Add to Post" for all. Right-click to copy.
         </p>
       </div>
     </div>

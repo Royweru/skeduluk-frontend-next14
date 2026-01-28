@@ -1,24 +1,58 @@
-import { useState } from 'react';
-import { Wand2, SpellCheck, Hash, Loader2, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { usePostCreator } from '@/hooks/api/use-post-creator';
-import { cn } from '@/lib/utils';
+"use client";
+import { useState } from "react";
+import { Wand2, SpellCheck, Hash, Loader2, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { usePostCreator } from "@/hooks/api/use-post-creator";
+import { cn } from "@/lib/utils";
 
 const TONES = [
-  { value: 'engaging', label: 'Engaging', icon: '✨', desc: 'Captivating and energetic' },
-  { value: 'professional', label: 'Professional', icon: '💼', desc: 'Formal and authoritative' },
-  { value: 'casual', label: 'Casual', icon: '😊', desc: 'Relaxed and friendly' },
-  { value: 'humorous', label: 'Humorous', icon: '😄', desc: 'Witty and playful' },
-  { value: 'inspirational', label: 'Inspirational', icon: '🚀', desc: 'Motivating and uplifting' },
+  {
+    value: "engaging",
+    label: "Engaging",
+    icon: "✨",
+    desc: "Captivating and energetic",
+  },
+  {
+    value: "professional",
+    label: "Professional",
+    icon: "💼",
+    desc: "Formal and authoritative",
+  },
+  {
+    value: "casual",
+    label: "Casual",
+    icon: "😊",
+    desc: "Relaxed and friendly",
+  },
+  {
+    value: "humorous",
+    label: "Humorous",
+    icon: "😄",
+    desc: "Witty and playful",
+  },
+  {
+    value: "inspirational",
+    label: "Inspirational",
+    icon: "🚀",
+    desc: "Motivating and uplifting",
+  },
 ];
 
 export function AIToolsPanel() {
-  const [activeTab, setActiveTab] = useState<'proofread' | 'enhance' | 'hashtags'>('proofread');
-  
+  const [activeTab, setActiveTab] = useState<
+    "proofread" | "enhance" | "hashtags"
+  >("proofread");
+
   const {
     content,
     selectedPlatforms,
@@ -33,7 +67,7 @@ export function AIToolsPanel() {
     applyEnhancement,
   } = usePostCreator();
 
-  const isBusy = activeAITool !== 'none';
+  const isBusy = activeAITool !== "none";
   const hasContent = content.trim().length > 0;
   const hasPlatforms = selectedPlatforms.length > 0;
 
@@ -45,15 +79,17 @@ export function AIToolsPanel() {
           <Wand2 className="h-5 w-5 text-purple-600" />
           AI Assistant
         </h3>
-        <p className="text-xs text-gray-600 mt-1">Enhance your content with AI</p>
+        <p className="text-xs text-gray-600 mt-1">
+          Enhance your content with AI
+        </p>
       </div>
 
       {/* Tool Tabs */}
       <div className="flex gap-2 p-4 bg-white/50">
         <Button
           size="sm"
-          variant={activeTab === 'proofread' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('proofread')}
+          variant={activeTab === "proofread" ? "default" : "ghost"}
+          onClick={() => setActiveTab("proofread")}
           className="flex-1"
         >
           <SpellCheck className="h-4 w-4 mr-2" />
@@ -61,8 +97,8 @@ export function AIToolsPanel() {
         </Button>
         <Button
           size="sm"
-          variant={activeTab === 'enhance' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('enhance')}
+          variant={activeTab === "enhance" ? "default" : "ghost"}
+          onClick={() => setActiveTab("enhance")}
           className="flex-1"
         >
           <Wand2 className="h-4 w-4 mr-2" />
@@ -70,8 +106,8 @@ export function AIToolsPanel() {
         </Button>
         <Button
           size="sm"
-          variant={activeTab === 'hashtags' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('hashtags')}
+          variant={activeTab === "hashtags" ? "default" : "ghost"}
+          onClick={() => setActiveTab("hashtags")}
           className="flex-1"
         >
           <Hash className="h-4 w-4 mr-2" />
@@ -82,10 +118,12 @@ export function AIToolsPanel() {
       {/* Content Area */}
       <ScrollArea className="flex-1 p-4">
         {/* PROOFREAD TAB */}
-        {activeTab === 'proofread' && (
+        {activeTab === "proofread" && (
           <div className="space-y-4">
             <div className="p-4 bg-white rounded-lg border">
-              <h4 className="text-sm font-semibold mb-2">What Proofreading Does</h4>
+              <h4 className="text-sm font-semibold mb-2">
+                What Proofreading Does
+              </h4>
               <ul className="text-xs text-gray-600 space-y-1">
                 <li>✓ Fixes grammar mistakes</li>
                 <li>✓ Corrects spelling errors</li>
@@ -122,7 +160,7 @@ export function AIToolsPanel() {
         )}
 
         {/* ENHANCE TAB */}
-        {activeTab === 'enhance' && (
+        {activeTab === "enhance" && (
           <div className="space-y-4">
             {/* Tone Selector */}
             <div>
@@ -138,7 +176,9 @@ export function AIToolsPanel() {
                         <span>{tone.icon}</span>
                         <div>
                           <div className="font-medium">{tone.label}</div>
-                          <div className="text-xs text-gray-500">{tone.desc}</div>
+                          <div className="text-xs text-gray-500">
+                            {tone.desc}
+                          </div>
                         </div>
                       </div>
                     </SelectItem>
@@ -149,7 +189,9 @@ export function AIToolsPanel() {
 
             {/* What Enhancement Does */}
             <div className="p-4 bg-white rounded-lg border">
-              <h4 className="text-sm font-semibold mb-2">What Enhancement Does</h4>
+              <h4 className="text-sm font-semibold mb-2">
+                What Enhancement Does
+              </h4>
               <ul className="text-xs text-gray-600 space-y-1">
                 <li>✓ Optimizes for each platform</li>
                 <li>✓ Adjusts tone & style</li>
@@ -186,21 +228,30 @@ export function AIToolsPanel() {
             {/* Enhancements List */}
             {aiEnhancements.length > 0 && (
               <div className="space-y-3">
-                <Label className="text-sm font-semibold">Enhanced Versions</Label>
+                <Label className="text-sm font-semibold">
+                  Enhanced Versions
+                </Label>
                 {aiEnhancements.map((enh) => (
-                  <div key={enh.platform} className="p-3 bg-white rounded-lg border space-y-2">
+                  <div
+                    key={enh.platform}
+                    className="p-3 bg-white rounded-lg border space-y-2"
+                  >
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary">{enh.platform}</Badge>
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => applyEnhancement(enh.platform, enh.enhanced_content)}
+                        onClick={() =>
+                          applyEnhancement(enh.platform, enh.enhanced_content)
+                        }
                       >
                         <CheckCircle2 className="h-4 w-4 mr-1" />
                         Use This
                       </Button>
                     </div>
-                    <p className="text-sm text-gray-700">{enh.enhanced_content}</p>
+                    <p className="text-sm text-gray-700">
+                      {enh.enhanced_content}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -209,7 +260,7 @@ export function AIToolsPanel() {
         )}
 
         {/* HASHTAGS TAB */}
-        {activeTab === 'hashtags' && (
+        {activeTab === "hashtags" && (
           <div className="space-y-4">
             <div className="p-4 bg-white rounded-lg border">
               <h4 className="text-sm font-semibold mb-2">Coming Soon</h4>

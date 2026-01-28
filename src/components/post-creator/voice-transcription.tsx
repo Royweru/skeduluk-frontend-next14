@@ -1,3 +1,5 @@
+// components/post-creator/VoiceTranscription.tsx
+"use client";
 import { useState, useRef } from "react";
 import { Mic, Square, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";

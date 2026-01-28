@@ -1,4 +1,5 @@
 // components/post-creator/PlatformSelector.tsx
+"use client";
 import { CheckCircle2, AlertCircle, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";

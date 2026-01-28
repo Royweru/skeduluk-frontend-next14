@@ -1,4 +1,5 @@
 // components/post-creator/SchedulePicker.tsx
+"use client";
 import { Label } from "@/components/ui/label";
 import {
   Calendar,

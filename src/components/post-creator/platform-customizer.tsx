@@ -1,12 +1,13 @@
 // components/post-creator/PlatformCustomizer.tsx
-import { useState, useEffect } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Twitter, Linkedin, Facebook, Instagram, Youtube } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { MediaUploadZone } from './media-upload-zone';
+"use client";
+import { useState, useEffect } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Twitter, Linkedin, Facebook, Instagram, Youtube } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { MediaUploadZone } from "./media-upload-zone";
 
 const PLATFORM_ICONS: Record<string, any> = {
   twitter: Twitter,
@@ -45,12 +46,13 @@ export function PlatformCustomizer({
 }: PlatformCustomizerProps) {
   const [dragActive, setDragActive] = useState(false);
   const PlatformIcon = PLATFORM_ICONS[platformId.toLowerCase()] || Twitter;
-  
-  const currentText = platformSpecific[platformId.toLowerCase()]?.text || content;
-  const currentMedia = customizePerPlatform 
-    ? (platformSpecific[platformId.toLowerCase()]?.media || [])
+
+  const currentText =
+    platformSpecific[platformId.toLowerCase()]?.text || content;
+  const currentMedia = customizePerPlatform
+    ? platformSpecific[platformId.toLowerCase()]?.media || []
     : uploadedMedia;
-  
+
   const count = currentText.length;
   const isOver = count > platformLimit;
   const isNear = count > platformLimit * 0.9;
@@ -61,8 +63,8 @@ export function PlatformCustomizer({
       ...prev,
       [platformId.toLowerCase()]: {
         ...prev[platformId.toLowerCase()],
-        text: e.target.value
-      }
+        text: e.target.value,
+      },
     }));
   };
 
@@ -79,16 +81,17 @@ export function PlatformCustomizer({
       {/* Platform Header */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white border-b">
         <div className="flex items-center gap-3">
-          <div className={cn("p-2 rounded-lg text-white shadow-md", platformColor)}>
+          <div
+            className={cn("p-2 rounded-lg text-white shadow-md", platformColor)}
+          >
             <PlatformIcon className="h-5 w-5" />
           </div>
           <div>
             <h4 className="font-semibold text-gray-900">{platformName}</h4>
             <p className="text-xs text-gray-500">
-              {platformSpecific[platformId.toLowerCase()]?.text 
-                ? 'Custom version' 
-                : 'Using main content'
-              }
+              {platformSpecific[platformId.toLowerCase()]?.text
+                ? "Custom version"
+                : "Using main content"}
             </p>
           </div>
         </div>
@@ -99,17 +102,15 @@ export function PlatformCustomizer({
           {count.toLocaleString()} / {platformLimit.toLocaleString()}
         </Badge>
       </div>
-
       {/* Content Editor */}
       <div className="px-4 space-y-4">
         <div>
           <Label className="text-sm font-semibold mb-2 block">
-            {platformSpecific[platformId.toLowerCase()]?.text 
-              ? `Custom ${platformName} content` 
-              : `Click to customize for ${platformName}`
-            }
+            {platformSpecific[platformId.toLowerCase()]?.text
+              ? `Custom ${platformName} content`
+              : `Click to customize for ${platformName}`}
           </Label>
-          
+
           <Textarea
             value={currentText}
             onChange={handleChange}
@@ -117,7 +118,8 @@ export function PlatformCustomizer({
             className={cn(
               "min-h-[200px] resize-none transition-all",
               isOver && "border-red-500 bg-red-50",
-              !platformSpecific[platformId.toLowerCase()]?.text && "border-blue-200 bg-blue-50/30"
+              !platformSpecific[platformId.toLowerCase()]?.text &&
+                "border-blue-200 bg-blue-50/30",
             )}
           />
 
@@ -127,7 +129,11 @@ export function PlatformCustomizer({
               <div
                 className={cn(
                   "h-full transition-all duration-300",
-                  isOver ? "bg-red-500" : isNear ? "bg-yellow-500" : "bg-gradient-to-r from-green-500 to-blue-500"
+                  isOver
+                    ? "bg-red-500"
+                    : isNear
+                      ? "bg-yellow-500"
+                      : "bg-gradient-to-r from-green-500 to-blue-500",
                 )}
                 style={{ width: `${Math.min(percentage, 100)}%` }}
               />
@@ -150,8 +156,8 @@ export function PlatformCustomizer({
           {!platformSpecific[platformId.toLowerCase()]?.text && (
             <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs text-blue-700">
-                💡 <strong>Tip:</strong> Start typing to create a custom version for {platformName}. 
-                The main content will be used as fallback.
+                💡 <strong>Tip:</strong> Start typing to create a custom version
+                for {platformName}. The main content will be used as fallback.
               </p>
             </div>
           )}
@@ -159,8 +165,8 @@ export function PlatformCustomizer({
           {isOver && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-xs text-red-700">
-                ⚠️ <strong>Warning:</strong> This post exceeds {platformName}'s character limit 
-                and may be truncated when published.
+                ⚠️ <strong>Warning:</strong> This post exceeds {platformName}'s
+                character limit and may be truncated when published.
               </p>
             </div>
           )}
@@ -176,7 +182,6 @@ export function PlatformCustomizer({
           platformId={platformId}
         />
       </div>
-
       <div className="h-4" /> {/* Spacing */}
     </div>
   );
