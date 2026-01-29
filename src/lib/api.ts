@@ -118,6 +118,58 @@ export const authApi = {
   },
 };
 
+// User API functions
+export const userApi = {
+  // Get current user info
+  getCurrentUser: async () => {
+    const response = await api.get("/users/me");
+    return response.data;
+  },
+
+  // Update user profile
+  updateProfile: async (data: { email?: string; username?: string }) => {
+    const response = await api.put("/users/me", data);
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (data: {
+    current_password: string;
+    new_password: string;
+  }) => {
+    const response = await api.put("/users/change-password", data);
+    return response.data;
+  },
+
+  // Update notification preferences
+  updateNotificationPreferences: async (data: {
+    email_on_post_success?: boolean;
+    email_on_post_failure?: boolean;
+    email_weekly_analytics?: boolean;
+  }) => {
+    const response = await api.put("/users/notification-preferences", data);
+    return response.data;
+  },
+
+  // Get user stats
+  getStats: async () => {
+    const response = await api.get("/users/stats");
+    return response.data;
+  },
+
+  // Deactivate account
+  deactivateAccount: async () => {
+    const response = await api.post("/users/deactivate");
+    return response.data;
+  },
+
+  // Permanently delete account
+  deleteAccount: async () => {
+    const response = await api.delete("/users/me");
+    return response.data;
+  },
+};
+
 export const postsApi = {
   getPosts: async (params?: {
     skip?: number;

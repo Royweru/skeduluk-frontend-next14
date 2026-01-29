@@ -1,95 +1,111 @@
 // src/components/layout/dashboard-sidebar.tsx
-'use client'
+"use client";
 
-import React from 'react'
-import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  LayoutDashboard, Calendar, BarChart2, BookOpen, Settings, 
-  ChevronLeft, ChevronRight, Sparkles, CheckCircle, FileText, Users, Zap
-} from 'lucide-react'
-import { useSocialConnections } from '@/hooks/api/use-social-connections'
-import { cn } from '@/lib/utils'
+import React from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  LayoutDashboard,
+  Calendar,
+  BarChart2,
+  BookOpen,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  CheckCircle,
+  FileText,
+  Users,
+  Zap,
+} from "lucide-react";
+import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
-  collapsed: boolean
-  onCollapse: (collapsed: boolean) => void
-  pathname: string
-  onNavigate?: () => void
-  isMobile?: boolean
+  collapsed: boolean;
+  onCollapse: (collapsed: boolean) => void;
+  pathname: string;
+  onNavigate?: () => void;
+  isMobile?: boolean;
 }
 
 const navigation = [
-  { 
-    name: 'Dashboard', 
-    icon: LayoutDashboard, 
-    href: '/dashboard/overview',
-    description: 'Overview & stats'
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+    href: "/dashboard/overview",
+    description: "Overview & stats",
   },
-  { 
-    name: 'Calendar', 
-    icon: Calendar, 
-    href: '/dashboard/calendar',
-    description: 'Schedule posts'
+  {
+    name: "Calendar",
+    icon: Calendar,
+    href: "/dashboard/calendar",
+    description: "Schedule posts",
   },
-  { 
-    name: 'Posts', 
-    icon: FileText, 
-    href: '/dashboard/posts',
-    description: 'Manage content'
+  {
+    name: "Posts",
+    icon: FileText,
+    href: "/dashboard/posts",
+    description: "Manage content",
   },
-  { 
-    name: 'Analytics', 
-    icon: BarChart2, 
-    href: '/dashboard/analytics',
-    description: 'Performance metrics'
+  {
+    name: "Analytics",
+    icon: BarChart2,
+    href: "/dashboard/analytics",
+    description: "Performance metrics",
   },
-  { 
-    name: 'Templates', 
-    icon: BookOpen, 
-    href: '/dashboard/templates',
-    description: 'Content templates'
+  {
+    name: "Templates",
+    icon: BookOpen,
+    href: "/dashboard/templates",
+    description: "Content templates",
   },
-  { 
-    name: 'Social Accounts', 
-    icon: Users, 
-    href: '/dashboard/social',
-    description: 'Connected platforms'
+  {
+    name: "Social Accounts",
+    icon: Users,
+    href: "/dashboard/social",
+    description: "Connected platforms",
   },
-  { 
-    name: 'AI Tools', 
-    icon: Zap, 
-    href: '/dashboard/ai-tools',
-    description: 'AI enhancements'
+  {
+    name: "AI Tools",
+    icon: Zap,
+    href: "/dashboard/ai-tools",
+    description: "AI enhancements",
   },
-  { 
-    name: 'Settings', 
-    icon: Settings, 
-    href: '/dashboard/settings',
-    description: 'Preferences'
+  {
+    name: "Profile",
+    icon: Users,
+    href: "/dashboard/profile",
+    description: "Your account",
   },
-]
+  {
+    name: "Settings",
+    icon: Settings,
+    href: "/dashboard/settings",
+    description: "Preferences",
+  },
+];
 
 const platformConfig = {
-  TWITTER: { name: 'Twitter', color: 'bg-black' },
-  FACEBOOK: { name: 'Facebook', color: 'bg-blue-600' },
-  LINKEDIN: { name: 'LinkedIn', color: 'bg-blue-700' },
-}
+  TWITTER: { name: "Twitter", color: "bg-black" },
+  FACEBOOK: { name: "Facebook", color: "bg-blue-600" },
+  LINKEDIN: { name: "LinkedIn", color: "bg-blue-700" },
+};
 
-export function DashboardSidebar({ 
-  collapsed, 
-  onCollapse, 
-  pathname, 
-  onNavigate, 
-  isMobile = false 
+export function DashboardSidebar({
+  collapsed,
+  onCollapse,
+  pathname,
+  onNavigate,
+  isMobile = false,
 }: SidebarProps) {
-  const { connections } = useSocialConnections()
-  const connectedPlatforms = connections || []
+  const { connections } = useSocialConnections();
+  const connectedPlatforms = connections || [];
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard'
-    return pathname.startsWith(href)
-  }
+    if (href === "/dashboard") return pathname === "/dashboard";
+    return pathname.startsWith(href);
+  };
 
   return (
     <motion.aside
@@ -97,7 +113,7 @@ export function DashboardSidebar({
       animate={{ width: collapsed && !isMobile ? 80 : 288 }}
       className={cn(
         "fixed left-0 top-0 h-full bg-gradient-to-b from-slate-800 via-slate-900 to-blue-950 text-white shadow-2xl z-40",
-        isMobile && "relative"
+        isMobile && "relative",
       )}
     >
       <div className="flex flex-col h-full">
@@ -144,8 +160,8 @@ export function DashboardSidebar({
         {/* Navigation Links */}
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
-            const Icon = item.icon
-            const active = isActive(item.href)
+            const Icon = item.icon;
+            const active = isActive(item.href);
 
             return (
               <Link
@@ -156,15 +172,17 @@ export function DashboardSidebar({
                   "group relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all",
                   active
                     ? "bg-white/10 text-white shadow-lg"
-                    : "text-slate-300 hover:bg-white/5 hover:text-white"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white",
                 )}
                 title={collapsed && !isMobile ? item.name : undefined}
               >
-                <Icon className={cn(
-                  "w-5 h-5 flex-shrink-0",
-                  collapsed && !isMobile && "mx-auto"
-                )} />
-                
+                <Icon
+                  className={cn(
+                    "w-5 h-5 flex-shrink-0",
+                    collapsed && !isMobile && "mx-auto",
+                  )}
+                />
+
                 <AnimatePresence mode="wait">
                   {(!collapsed || isMobile) && (
                     <motion.div
@@ -188,7 +206,7 @@ export function DashboardSidebar({
                   />
                 )}
               </Link>
-            )
+            );
           })}
         </nav>
 
@@ -225,14 +243,22 @@ export function DashboardSidebar({
 
               <div className="space-y-2">
                 {connectedPlatforms.length > 0 ? (
-                  connectedPlatforms.map((conn:any) => {
-                    const config = platformConfig[conn.platform as keyof typeof platformConfig]
+                  connectedPlatforms.map((conn: any) => {
+                    const config =
+                      platformConfig[
+                        conn.platform as keyof typeof platformConfig
+                      ];
                     return (
                       <div
                         key={conn.platform}
                         className="flex items-center gap-2 p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                       >
-                        <div className={cn("w-2 h-2 rounded-full", config?.color || 'bg-gray-500')} />
+                        <div
+                          className={cn(
+                            "w-2 h-2 rounded-full",
+                            config?.color || "bg-gray-500",
+                          )}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
                             {config?.name || conn.platform}
@@ -245,7 +271,7 @@ export function DashboardSidebar({
                         </div>
                         <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
                       </div>
-                    )
+                    );
                   })
                 ) : (
                   <p className="text-xs text-slate-400 text-center py-2">
@@ -270,20 +296,24 @@ export function DashboardSidebar({
         {collapsed && !isMobile && connectedPlatforms.length > 0 && (
           <div className="px-3 py-4 border-t border-white/10">
             <div className="flex flex-col items-center gap-2">
-              {connectedPlatforms.slice(0, 3).map((conn:any) => {
-                const config = platformConfig[conn.platform as keyof typeof platformConfig]
+              {connectedPlatforms.slice(0, 3).map((conn: any) => {
+                const config =
+                  platformConfig[conn.platform as keyof typeof platformConfig];
                 return (
                   <div
                     key={conn.platform}
-                    className={cn("w-2 h-2 rounded-full", config?.color || 'bg-gray-500')}
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      config?.color || "bg-gray-500",
+                    )}
                     title={config?.name}
                   />
-                )
+                );
               })}
             </div>
           </div>
         )}
       </div>
     </motion.aside>
-  )
+  );
 }

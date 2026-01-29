@@ -1,5 +1,6 @@
-
 // ==================== USER & AUTHENTICATION ====================
+
+import { StringValidation } from "zod/v3";
 
 export interface User {
   id: number;
@@ -7,8 +8,10 @@ export interface User {
   username: string;
   is_email_verified: boolean;
   is_active: boolean;
-  plan: 'trial' | 'basic' | 'pro' | 'enterprise';
+  plan: "trial" | "basic" | "pro" | "enterprise" | "premium";
   trial_ends_at: string | null;
+  auth_provider: string;
+  last_login_method: string;
   posts_used: number;
   posts_limit: number;
   created_at: string;
@@ -52,7 +55,12 @@ export interface ResetPasswordData {
 
 // src/types/social.ts
 
-export type SocialPlatform = 'TWITTER' | 'FACEBOOK' | 'LINKEDIN' | 'INSTAGRAM' | 'TIKTOKT';
+export type SocialPlatform =
+  | "TWITTER"
+  | "FACEBOOK"
+  | "LINKEDIN"
+  | "INSTAGRAM"
+  | "TIKTOKT";
 
 export interface SocialConnection {
   id: number;
@@ -92,7 +100,14 @@ export interface ConnectionError {
 
 // ==================== POSTS ====================
 
-export type PostStatus = 'draft' | 'scheduled' | 'processing' | 'posting' | 'posted' | 'failed' | 'partial';
+export type PostStatus =
+  | "draft"
+  | "scheduled"
+  | "processing"
+  | "posting"
+  | "posted"
+  | "failed"
+  | "partial";
 // export interface PostStatus {
 //   post_id: number;
 //   status: string;
@@ -146,7 +161,7 @@ export interface PostResult {
   post_id: number;
   platform: SocialPlatform;
   platform_post_id: string | null;
-  status: 'posted' | 'failed';
+  status: "posted" | "failed";
   error_message: string | null;
   posted_at: string | null;
   content_used: string | null;
@@ -186,7 +201,7 @@ export interface ContentEnhancementRequest {
   content: string;
   platforms: SocialPlatform[];
   image_count?: number;
-  tone?: 'engaging' | 'professional' | 'casual' | 'formal';
+  tone?: "engaging" | "professional" | "casual" | "formal";
 }
 
 export interface PlatformLimits {
@@ -194,7 +209,6 @@ export interface PlatformLimits {
   maxImages: number;
   supportedMediaTypes: string[];
 }
-
 
 export interface EnhancementRequest {
   content: string;
@@ -233,13 +247,13 @@ export interface PostTimeResponse {
 
 // ==================== SUBSCRIPTIONSIONS & BILLING ====================
 
-export type SubscriptionPlan = 'trial' | 'basic' | 'pro' | 'enterprise';
+export type SubscriptionPlan = "trial" | "basic" | "pro" | "enterprise";
 
 export interface Subscription {
   id: number;
   user_id: number;
   plan: SubscriptionPlan;
-  status: 'active' | 'cancelled' | 'expired';
+  status: "active" | "cancelled" | "expired";
   amount: number;
   currency: string;
   payment_method: string;
@@ -256,12 +270,12 @@ export interface PlanPricing {
   currency: string;
   features: string[];
   posts_limit: number;
-  interval: 'monthly' | 'yearly';
+  interval: "monthly" | "yearly";
 }
 
 export interface PaymentInitiateRequest {
   plan: SubscriptionPlan;
-  payment_method: 'flutterwave' | 'paypal' | 'stripe';
+  payment_method: "flutterwave" | "paypal" | "stripe";
 }
 
 export interface PaymentInitiateResponse {
@@ -304,24 +318,19 @@ export interface CalendarEvent {
   id: number;
   title: string;
   content: string;
-  start: string;
-  end: string;
-  platforms: string[];
-  status: 'scheduled' | 'posted' | 'failed' | 'processing' | 'draft';
-  image_urls: string[];
+  start: string; // ISO string
+  end: string; // ISO string
+  platforms: SocialPlatform[];
+  status: PostStatus;
+  tags?: string[];
+  image_urls?: string[];
+  video_urls?: string[];
   is_scheduled: boolean;
   scheduled_for: string | null;
   created_at: string;
-  error_message?: string;
+  error_message?: string | null;
   color: string;
   allDay: boolean;
-}
-
-export interface CalendarEventsResponse {
-  events: CalendarEvent[];
-  start_date: string;
-  end_date: string;
-  total: number;
 }
 
 export interface CalendarDay {
@@ -331,21 +340,46 @@ export interface CalendarDay {
   isCurrentMonth: boolean;
 }
 
-export interface MonthSummary {
-  [date: string]: {
-    total: number;
-    by_status: {
-      scheduled?: number;
-      posted?: number;
-      failed?: number;
-      processing?: number;
-    };
-  };
+export interface CalendarEventsResponse {
+  events: CalendarEvent[];
+  start_date: string;
+  end_date: string;
+  total: number;
 }
 
-export type CalendarView = 'month' | 'list' | 'week';
+export interface CalendarFilters {
+  platforms: SocialPlatform[];
+  tags: string[];
+  status: PostStatus[];
+  searchQuery: string;
+}
 
+export interface DateRange {
+  start: string;
+  end: string;
+}
 
+export type ViewMode = "week" | "month" | "list";
+
+export interface DraggedEvent {
+  event: CalendarEvent;
+  sourceDate: Date;
+  sourceHour?: number;
+}
+
+export interface TimeSlot {
+  date: Date;
+  hour: number;
+  events: CalendarEvent[];
+}
+
+export interface CalendarSettings {
+  defaultView: ViewMode;
+  startOfWeek: number; // 0 = Sunday, 1 = Monday
+  timezone: string;
+  showWeekends: boolean;
+  compactView: boolean;
+}
 // ==================== API RESPONSES ====================
 
 export interface ApiResponse<T = any> {
@@ -391,7 +425,7 @@ export interface MediaUploadResponse {
 
 export interface Notification {
   id: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: "success" | "error" | "info" | "warning";
   title: string;
   message: string;
   timestamp: Date;
@@ -409,8 +443,14 @@ export interface NotificationSettings {
 // ==================== UI COMPONENTS ====================
 
 export interface ButtonProps {
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  variant?:
+    | "default"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
+  size?: "default" | "sm" | "lg" | "icon";
   disabled?: boolean;
   loading?: boolean;
   children: React.ReactNode;
@@ -464,7 +504,7 @@ export interface SearchFilters {
 
 export interface SortOption {
   field: string;
-  direction: 'asc' | 'desc';
+  direction: "asc" | "desc";
   label: string;
 }
 
@@ -495,7 +535,11 @@ export interface WebhookPayload {
 }
 
 export interface WebhookEvent {
-  type: 'post.published' | 'post.failed' | 'user.created' | 'subscription.updated';
+  type:
+    | "post.published"
+    | "post.failed"
+    | "user.created"
+    | "subscription.updated";
   data: any;
 }
 
@@ -524,7 +568,7 @@ export interface AppSettings {
   };
 }
 
-//Facebook page connections 
+//Facebook page connections
 
 export interface FacebookPage {
   id: string;
@@ -561,7 +605,7 @@ export interface SelectedPageResponse {
 export interface TemplateVariable {
   name: string;
   label: string;
-  type: 'text' | 'date' | 'number' | 'hashtags' | 'url';
+  type: "text" | "date" | "number" | "hashtags" | "url";
   placeholder: string;
   required: boolean;
   default_value?: string;
@@ -640,5 +684,3 @@ export interface TemplateAnalytics {
     engagement_rate: number;
   }>;
 }
-
-
