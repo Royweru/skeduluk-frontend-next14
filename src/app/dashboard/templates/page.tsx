@@ -1,119 +1,166 @@
-// src/app/dashboard/templates/page.tsx
-'use client';
+// app/dashboard/templates/page.tsx
+/**
+ * Templates Page
+ *
+ * This page displays all available templates and allows users to:
+ * 1. Browse templates by category, search, filter
+ * 2. View template details
+ * 3. Click "Use Template" which:
+ *    - Opens the template variables modal
+ *    - User fills in variables
+ *    - Opens the post creator modal with pre-filled content
+ *    - User customizes and publishes the post
+ */
 
-import React, { useState, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+"use client";
+
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Plus,
   Search,
-  LayoutGrid,
+  Plus,
+  Folder,
+  Grid3x3,
   List,
   Star,
   Sparkles,
-  Filter,
-  SlidersHorizontal,
-  FolderPlus,
-  Folder,
   TrendingUp,
-  Clock,
-  Zap,
-  ArrowUpDown,
-  AlertCircle,
-  ArrowLeft,
-} from 'lucide-react';
-import { TemplateCard } from '@/components/templates/template-card';
+  Loader2,
+} from "lucide-react";
+import { TemplateCard } from "@/components/templates/template-card";
+import { TemplateDetailModal } from "@/components/templates/template-detail-modal";
+import { TemplateVariablesModal } from "@/components/modals/template-variables-modal";
+import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { FolderManager } from "@/components/templates/folder-manager";
 import {
   useTemplates,
   useTemplateCategories,
-  useTemplateFolders,
   useToggleFavorite,
-  useDeleteTemplate
-} from '@/hooks/api/use-templates';
-import { cn } from '@/lib/utils';
-import toast from 'react-hot-toast';
-// Add these imports
-import { TemplateDetailModal } from '@/components/templates/template-detail-modal';
-import { TemplateUseModal } from '@/components/templates/template-use-modal';
-import { TemplateEditorModal } from '@/components/templates/template-editor-modal';
-import { FolderManager } from '@/components/templates/folder-manager';
-import { Template } from '@/types';
+  useDeleteTemplate,
+} from "@/hooks/api/use-templates";
+import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import { useTemplateCreator } from "@/hooks/use-template-creator";
+import { Template } from "@/types";
+import {
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
+  Youtube,
+  Video,
+} from "lucide-react";
+
+// Platform configs
+const PLATFORMS = [
+  {
+    id: "twitter",
+    name: "Twitter",
+    icon: Twitter,
+    color: "bg-sky-500",
+    limit: 280,
+    maxImages: 4,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    icon: Linkedin,
+    color: "bg-blue-600",
+    limit: 3000,
+    maxImages: 20,
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    icon: Facebook,
+    color: "bg-blue-700",
+    limit: 63206,
+    maxImages: 10,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    icon: Instagram,
+    color: "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500",
+    limit: 2200,
+    maxImages: 10,
+  },
+  {
+    id: "youtube",
+    name: "YouTube",
+    icon: Youtube,
+    color: "bg-red-600",
+    limit: 5000,
+    maxImages: 1,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    icon: Video,
+    color: "bg-black",
+    limit: 2200,
+    maxImages: 10,
+  },
+];
+
 export default function TemplatesPage() {
   // State
-  const [view, setView] = useState<'grid' | 'list'>('grid');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedFolder, setSelectedFolder] = useState<number | null>(null);
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
-  
-  // Modals
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showUseModal, setShowUseModal] = useState(false);
-  const [showEditorModal, setShowEditorModal] = useState(false);
-  const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedTone, setSelectedTone] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [showFolderManager, setShowFolderManager] = useState(false);
 
-  // Build search params
-  const searchParams = useMemo(() => {
-    const params: any = {
-      query: searchQuery || undefined,
-      category: selectedCategory !== 'all' ? selectedCategory : undefined,
-      is_favorite: showFavorites || undefined,
-      folder_id: selectedFolder || undefined,
-      sort_by: sortBy,
-      sort_order: sortOrder,
-      include_system: activeTab === 'all' || activeTab === 'official',
-      include_community: activeTab === 'all' || activeTab === 'community',
-      limit: 50,
-    };
-    
-    return params;
-  }, [searchQuery, selectedCategory, showFavorites, selectedFolder, sortBy, sortOrder, activeTab]);
+  // Template modals
+  const [selectedTemplateForDetails, setSelectedTemplateForDetails] =
+    useState<Template | null>(null);
+  const [selectedTemplateForUse, setSelectedTemplateForUse] =
+    useState<Template | null>(null);
+
+  // Post creator modal
+  const { showPostCreator, setShowPostCreator } = useTemplateCreator();
 
   // Queries
-  const { data: templatesData, isLoading: templatesLoading, isError,error } = useTemplates(searchParams);
+  const { data: templatesData, isLoading } = useTemplates({
+    query: searchQuery || undefined,
+    category: selectedCategory !== "all" ? selectedCategory : undefined,
+    tone: selectedTone !== "all" ? selectedTone : undefined,
+    include_system: true,
+    include_community: false,
+  });
+
   const { data: categoriesData } = useTemplateCategories();
-  const { data: folders } = useTemplateFolders();
-  
-  // Mutations
+  const { connections } = useSocialConnections();
   const toggleFavoriteMutation = useToggleFavorite();
   const deleteTemplateMutation = useDeleteTemplate();
 
+  // Connected platforms
+  const connectedPlatforms =
+    connections?.map((c: any) => c.platform.toLowerCase()) || [];
+
   const templates = templatesData?.templates || [];
-  const categories = categoriesData?.categories || [];
 
   // Handlers
   const handleUseTemplate = (template: Template) => {
-    setSelectedTemplate(template);
-    setShowUseModal(true);
+    setSelectedTemplateForUse(template);
+  };
+
+  const handleContinueToPostCreator = () => {
+    setSelectedTemplateForUse(null);
+    setShowPostCreator(true);
   };
 
   const handleViewDetails = (template: Template) => {
-    setSelectedTemplate(template);
-    setShowDetailModal(true);
-  };
-
-  const handleEditTemplate = (template: Template) => {
-    setSelectedTemplate(template);
-    setShowEditorModal(true);
+    setSelectedTemplateForDetails(template);
   };
 
   const handleToggleFavorite = async (template: Template) => {
@@ -125,330 +172,231 @@ export default function TemplatesPage() {
   };
 
   const handleDeleteTemplate = async (template: Template) => {
-    if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
-      try {
-        await deleteTemplateMutation.mutateAsync(template.id);
-      } catch (error) {
-        // Error handled in mutation
-      }
+    if (!confirm(`Are you sure you want to delete "${template.name}"?`)) {
+      return;
+    }
+
+    try {
+      await deleteTemplateMutation.mutateAsync(template.id);
+    } catch (error) {
+      // Error handled in mutation
     }
   };
 
-  // Quick filters
-  const quickFilters = [
-    { id: 'all', label: 'All Templates', icon: LayoutGrid },
-    { id: 'favorites', label: 'Favorites', icon: Star },
-    { id: 'recent', label: 'Recently Used', icon: Clock },
-    { id: 'trending', label: 'Trending', icon: TrendingUp },
-  ];
-
-  if (isError) { 
-    console.log('Error loading the templates : ', error)
-  
-  return (
-    <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-red-300">
-      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <AlertCircle className="h-8 w-8 text-red-600" />
-      </div>
-      <h3 className="text-lg font-semibold mb-2">Error Loading Templates</h3>
-      <p className="text-gray-600 mb-4">
-        {error?.message || 'Authentication error - please try logging in again.'}
-      </p>
-      <Button onClick={() => { localStorage.removeItem('access_token'); window.location.href = '/auth/login'; }}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Login
-      </Button>
-    </div>
-  );
-}
+  const categories = categoriesData?.categories || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600
-             bg-clip-text text-transparent">
-              📝 Content Templates
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Post Templates
             </h1>
             <p className="text-gray-600 mt-1">
-              Create posts faster with pre-built templates
+              Professional templates to create engaging content faster
             </p>
           </div>
-          
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <Button
+              onClick={() => setShowFolderManager(true)}
               variant="outline"
-              onClick={() => setShowCreateFolder(true)}
+              className="gap-2"
             >
-              <FolderPlus className="h-4 w-4 mr-2" />
-              New Folder
+              <Folder className="h-4 w-4" />
+              Manage Folders
             </Button>
-            <Button
-              onClick={() => {
-                setSelectedTemplate(null);
-                setShowEditorModal(true);
-              }}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
+            <Button className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600">
+              <Plus className="h-4 w-4" />
               Create Template
             </Button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="all">
-              <LayoutGrid className="h-4 w-4 mr-2" />
-              All
-            </TabsTrigger>
-            <TabsTrigger value="official">
-              <Sparkles className="h-4 w-4 mr-2" />
-              Official
-            </TabsTrigger>
-            <TabsTrigger value="mine">
-              <Folder className="h-4 w-4 mr-2" />
-              My Templates
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {/* Filters Bar */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border-2 border-gray-200">
-          <div className="flex flex-col lg:flex-row gap-3">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search templates..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-4">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200">
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="h-4 w-4 text-blue-600" />
+              <span className="text-xs font-semibold text-blue-900">
+                Total Templates
+              </span>
             </div>
-
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full lg:w-[200px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat: any) => (
-                  <SelectItem key={cat.category} value={cat.category}>
-                    {cat.category.replace('_', ' ')} ({cat.count})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Folder Filter */}
-            {folders && folders.length > 0 && (
-              <Select
-                value={selectedFolder?.toString() || 'all'}
-                onValueChange={(value:any) =>
-                  setSelectedFolder(value === 'all' ? null : parseInt(value))
-                }
-              >
-                <SelectTrigger className="w-full lg:w-[200px]">
-                  <SelectValue placeholder="Folder" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Folders</SelectItem>
-                  {folders.map((folder) => (
-                    <SelectItem key={folder.id} value={folder.id.toString()}>
-                      📁 {folder.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {/* Sort */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full lg:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="created_at">Date Created</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="usage_count">Most Used</SelectItem>
-                <SelectItem value="success_rate">Success Rate</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* View Toggle */}
-            <div className="flex items-center gap-2 border rounded-lg p-1">
-              <Button
-                variant={view === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setView('grid')}
-                className="h-8"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={view === 'list' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setView('list')}
-                className="h-8"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
+            <p className="text-2xl font-bold text-blue-700">
+              {templates.length}
+            </p>
           </div>
 
-          {/* Quick Filters */}
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-            <span className="text-sm text-gray-600 mr-2">Quick filters:</span>
-            <Button
-              variant={showFavorites ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setShowFavorites(!showFavorites)}
-            >
-              <Star className={cn('h-3.5 w-3.5 mr-1', showFavorites && 'fill-current')} />
-              Favorites
-            </Button>
-            {searchQuery || selectedCategory !== 'all' || selectedFolder || showFavorites ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategory('all');
-                  setSelectedFolder(null);
-                  setShowFavorites(false);
-                }}
-              >
-                Clear Filters
-              </Button>
-            ) : null}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200">
+            <div className="flex items-center gap-2 mb-1">
+              <Star className="h-4 w-4 text-purple-600" />
+              <span className="text-xs font-semibold text-purple-900">
+                Favorites
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-purple-700">
+              {templates.filter((t: any) => t.is_favorite).length}
+            </p>
           </div>
-        </div>
 
-        {/* Results Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">
-              {templatesLoading ? (
-                'Loading...'
-              ) : (
-                <>
-                  Showing <span className="font-semibold">{templates.length}</span>{' '}
-                  {templatesData?.total && templatesData.total > templates.length
-                    ? `of ${templatesData.total} `
-                    : ''}
-                  template{templates.length !== 1 ? 's' : ''}
-                </>
-              )}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span className="text-xs font-semibold text-green-900">
+                System Templates
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-green-700">
+              {templates.filter((t: any) => t.is_system).length}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-200">
+            <div className="flex items-center gap-2 mb-1">
+              <Grid3x3 className="h-4 w-4 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-900">
+                My Templates
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-amber-700">
+              {templates.filter((t: any) => !t.is_system).length}
             </p>
           </div>
         </div>
-
-        {/* Templates Grid/List */}
-        {templatesLoading ? (
-          <div className={cn(
-            view === 'grid'
-              ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-              : 'space-y-3'
-          )}>
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Skeleton key={i} className="h-[280px] rounded-xl" />
-            ))}
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-gray-300">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full 
-            flex items-center justify-center mx-auto mb-4">
-              <Sparkles className="h-8 w-8 text-blue-600" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No templates found</h3>
-            <p className="text-gray-600 mb-4">
-              {searchQuery || selectedCategory !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Create your first template to get started'}
-            </p>
-            <Button
-              onClick={() => {
-                setSelectedTemplate(null);
-                setShowEditorModal(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Template
-            </Button>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              view === 'grid'
-                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                : 'space-y-3'
-            )}
-          >
-            {templates.map((template:any) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                view={view}
-                onUse={handleUseTemplate}
-                onEdit={template.is_system ? undefined : handleEditTemplate}
-                onDelete={template.is_system ? undefined : handleDeleteTemplate}
-                onViewDetails={handleViewDetails}
-                onToggleFavorite={handleToggleFavorite}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Load More */}
-        {templatesData?.total && templatesData.total > templates.length && (
-          <div className="flex justify-center pt-6">
-            <Button variant="outline" size="lg">
-              Load More Templates
-            </Button>
-          </div>
-        )}
       </div>
 
-     {/* Template Detail Modal */}
-<TemplateDetailModal
-  template={selectedTemplate}
-  open={showDetailModal}
-  onOpenChange={setShowDetailModal}
-  onUse={handleUseTemplate}
-  onEdit={handleEditTemplate}
-  onToggleFavorite={handleToggleFavorite}
-/>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 items-center">
+        {/* Search */}
+        <div className="relative flex-1 min-w-[200px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search templates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
 
-{/* Template Use Modal */}
-<TemplateUseModal
-  template={selectedTemplate}
-  open={showUseModal}
-  onOpenChange={setShowUseModal}
-  onSuccess={() => {
-    toast.success('Post created from template!');
-  }}
-/>
+        {/* Category */}
+        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories.map((cat: any) => (
+              <SelectItem key={cat.category} value={cat.category}>
+                {cat.category.replace("_", " ")} ({cat.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-{/* Template Editor Modal */}
-<TemplateEditorModal
-  template={selectedTemplate}
-  open={showEditorModal}
-  onOpenChange={setShowEditorModal}
-  onSuccess={() => {
-    // Refresh templates list
-  }}
-/>
+        {/* Tone */}
+        <Select value={selectedTone} onValueChange={setSelectedTone}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tone" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Tones</SelectItem>
+            <SelectItem value="engaging">Engaging</SelectItem>
+            <SelectItem value="professional">Professional</SelectItem>
+            <SelectItem value="casual">Casual</SelectItem>
+            <SelectItem value="humorous">Humorous</SelectItem>
+            <SelectItem value="inspirational">Inspirational</SelectItem>
+          </SelectContent>
+        </Select>
 
-{/* Folder Manager */}
-<FolderManager
-  open={showCreateFolder}
-  onOpenChange={setShowCreateFolder}
-/>
+        {/* View Mode */}
+        <div className="flex gap-1 border-2 border-gray-200 rounded-lg p-1">
+          <Button
+            variant={viewMode === "grid" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("grid")}
+          >
+            <Grid3x3 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "list" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("list")}
+          >
+            <List className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Templates Grid/List */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      ) : templates.length === 0 ? (
+        <div className="text-center py-20">
+          <Sparkles className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            No templates found
+          </h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Try adjusting your filters or create a new template
+          </p>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Your First Template
+          </Button>
+        </div>
+      ) : (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              : "space-y-3"
+          }
+        >
+          {templates.map((template: Template) => (
+            <TemplateCard
+              key={template.id}
+              template={template}
+              onUse={handleUseTemplate}
+              onViewDetails={handleViewDetails}
+              onToggleFavorite={handleToggleFavorite}
+              onDelete={handleDeleteTemplate}
+              view={viewMode}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Modals */}
+      <TemplateDetailModal
+        template={selectedTemplateForDetails}
+        open={!!selectedTemplateForDetails}
+        onOpenChange={(open) => !open && setSelectedTemplateForDetails(null)}
+        onUse={handleUseTemplate}
+        onToggleFavorite={handleToggleFavorite}
+        onEdit={() => {}}
+      />
+
+      <TemplateVariablesModal
+        template={selectedTemplateForUse}
+        open={!!selectedTemplateForUse}
+        onOpenChange={(open) => !open && setSelectedTemplateForUse(null)}
+        onContinueToPostCreator={handleContinueToPostCreator}
+      />
+
+      <EnhancedPostCreatorModal
+        isOpen={showPostCreator}
+        onClose={() => setShowPostCreator(false)}
+        platforms={PLATFORMS}
+        connectedPlatforms={connectedPlatforms}
+      />
+
+      <FolderManager
+        open={showFolderManager}
+        onOpenChange={setShowFolderManager}
+      />
     </div>
   );
 }

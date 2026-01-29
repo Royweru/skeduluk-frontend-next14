@@ -1,731 +1,248 @@
+// app/dashboard/overview/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Plus,
+  FileText,
+  Users,
   Calendar,
   TrendingUp,
-  Sparkles,
-  Image as ImageIcon,
-  Mic,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Clock,
-  MoreHorizontal,
-  Zap,
-  Link as LinkIcon,
-  BarChart3,
-  Users,
-  CheckCircle,
-  AlertTriangle,
-  Eye,
   Heart,
   MessageCircle,
   Share2,
-  ArrowUpRight,
-  Send,
-  X,
-  Instagram,
-  Music,
-  Youtube,
-  Loader2,
+  Eye,
 } from "lucide-react";
-import {
-  useAIProviders,
-  useEnhanceContent,
-  usePosts,
-} from "@/hooks/api/use-posts";
+
+// Import our modular components
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { QuickActions } from "@/components/dashboard/quick-actions";
+import { TemplatesSnippet } from "@/components/dashboard/templates-snippet";
+import { RecentPostsWidget } from "@/components/dashboard/recent-posts-widget";
+import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+
+// Import hooks for data fetching
+import { usePosts } from "@/hooks/api/use-posts";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
-import { useDashboardAnalytics } from "@/hooks/api/use-analytics";
-import { format } from "date-fns";
-import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
-import { cn } from "@/lib/utils";
-import toast from "react-hot-toast";
-import { CreatePostModal } from "@/components/modals/create-post-modal";
-import { useOAuth } from "@/hooks/api/use-oauth";
-import { usePostStatusPolling } from "@/hooks/api/use-post-status";
-import { useQueryClient } from "@tanstack/react-query";
-import { PostCreatorModal } from "@/components/modals/post-creator-modal";
-import { AISuggestionsPanel } from "@/components/analytics/ai-suggestions-panel";
-export default function DashboardOverviewPage() {
-  const queryClient = useQueryClient();
+import {
+  Twitter,
+  Linkedin,
+  Facebook,
+  Instagram,
+  Youtube,
+  Video,
+} from "lucide-react";
+import { Post } from "@/types";
+
+// Platform configs
+const PLATFORMS = [
+  {
+    id: "twitter",
+    name: "Twitter",
+    icon: Twitter,
+    color: "bg-sky-500",
+    limit: 280,
+    maxImages: 4,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    icon: Linkedin,
+    color: "bg-blue-600",
+    limit: 3000,
+    maxImages: 20,
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    icon: Facebook,
+    color: "bg-blue-700",
+    limit: 63206,
+    maxImages: 10,
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    icon: Instagram,
+    color: "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500",
+    limit: 2200,
+    maxImages: 10,
+  },
+  {
+    id: "youtube",
+    name: "YouTube",
+    icon: Youtube,
+    color: "bg-red-600",
+    limit: 5000,
+    maxImages: 1,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    icon: Video,
+    color: "bg-black",
+    limit: 2200,
+    maxImages: 10,
+  },
+];
+
+export default function DashboardOverview() {
+  const router = useRouter();
   const { user } = useAuth();
-  const { initiateOAuth, isOAuthLoading, connectingPlatform } = useOAuth();
-  const { data: posts, isLoading: postsLoading } = usePosts({ limit: 6 });
+  const [showPostCreator, setShowPostCreator] = useState(false);
+
+  // Fetch data
+  const { data: postsData, isLoading: postsLoading } = usePosts();
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-  const { data: analyticsData, isLoading: analyticsLoading } =
-    useDashboardAnalytics(7);
-  const enhanceMutation = useEnhanceContent();
 
-  // Extract analytics summary
-  const summary = analyticsData?.summary;
-
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [postContent, setPostContent] = useState("");
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [publishingPostId, setPublishingPostId] = useState<number | null>(null);
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
-
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [scheduledDate, setScheduledDate] = useState("");
-  const [quickEnhanceMode, setQuickEnhanceMode] = useState(false);
-  const { data: aiProviders } = useAIProviders();
-  const [aiEnhancements, setAiEnhancements] = useState<any[]>([]);
-  const [aiEnhanced, setAiEnhanced] = useState(false);
-
+  const posts = postsData?.posts || [];
   const connectedPlatforms =
-    (connections && connections?.map((c: any) => c.platform.toLowerCase())) ||
-    [];
+    connections?.map((c: any) => c.platform.toLowerCase()) || [];
 
-  // Add the polling hook
-  const {
-    status: publishingStatus,
-    results: publishingResults,
-    isPosting,
-    isComplete,
-  } = usePostStatusPolling(publishingPostId, !!publishingPostId);
+  // Calculate stats
+  const totalPosts = posts.length;
+  const scheduledPosts = posts.filter(
+    (p: Post) => p.status === "scheduled",
+  ).length;
+  const postedPosts = posts.filter((p: Post) => p.status === "posted").length;
+  const connectedAccounts = connections?.length || 0;
 
-  const platforms = [
-    {
-      id: "twitter",
-      name: "Twitter/X",
-      icon: Twitter,
-      color: "bg-black",
-      limit: 280,
-      maxImages: 4,
-    },
-    {
-      id: "facebook",
-      name: "Facebook",
-      icon: Facebook,
-      color: "bg-blue-600",
-      limit: 63206,
-      maxImages: 4,
-    },
-    {
-      id: "linkedin",
-      name: "LinkedIn",
-      icon: Linkedin,
-      color: "bg-blue-700",
-      limit: 3000,
-      maxImages: 1,
-    },
-    {
-      id: "instagram",
-      name: "Instagram",
-      icon: Instagram,
-      color: "bg-gradient-to-tr from-purple-600 via-pink-600 to-orange-500",
-      limit: 2200,
-      maxImages: 4,
-    },
-    {
-      id: "tiktok",
-      name: "TikTok",
-      icon: Music,
-      color: "bg-black",
-      limit: 2200,
-      maxImages: 0,
-    },
-    {
-      id: "youtube",
-      name: "YouTube",
-      icon: Youtube,
-      color: "bg-red-600",
-      limit: 5000,
-      maxImages: 0,
-    },
-  ];
-
-  // Calculate success rate from posts
-  const calculateSuccessRate = () => {
-    if (!posts || posts.length === 0) return "--";
-    const postedCount = posts.filter((p: any) => p.status === "posted").length;
-    const totalWithStatus = posts.filter((p: any) =>
-      ["posted", "failed", "partial"].includes(p.status),
-    ).length;
-    if (totalWithStatus === 0) return "--";
-    return `${Math.round((postedCount / totalWithStatus) * 100)}%`;
-  };
-
-  const quickStats = [
-    {
-      label: "Total Posts",
-      value: user?.posts_used || 0,
-      icon: BarChart3,
-      color: "text-blue-600",
-    },
-    {
-      label: "Scheduled",
-      value: posts?.filter((p: any) => p.status === "scheduled").length || 0,
-      icon: Clock,
-      color: "text-purple-600",
-    },
-    {
-      label: "Connected",
-      value: connections?.length || 0,
-      icon: LinkIcon,
-      color: "text-green-600",
-    },
-    {
-      label: "Success Rate",
-      value: calculateSuccessRate(),
-      icon: TrendingUp,
-      color: "text-orange-600",
-    },
-  ];
-
-  // Helper to format numbers nicely
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  // Engagement metrics from real analytics
-  const engagementMetrics = [
-    {
-      icon: Eye,
-      label: "Views",
-      value: summary?.total_views ?? 0,
-      isLoading: analyticsLoading,
-    },
-    {
-      icon: Heart,
-      label: "Likes",
-      value: summary?.total_likes ?? 0,
-      isLoading: analyticsLoading,
-    },
-    {
-      icon: MessageCircle,
-      label: "Comments",
-      value: summary?.total_comments ?? 0,
-      isLoading: analyticsLoading,
-    },
-    {
-      icon: Share2,
-      label: "Shares",
-      value: summary?.total_shares ?? 0,
-      isLoading: analyticsLoading,
-    },
-  ];
-
-  // Handle OAuth callback notifications - client-side only
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const params = new URLSearchParams(window.location.search);
-    const connected = params.get("connected");
-    const success = params.get("success");
-    const error = params.get("error");
-    const username = params.get("username");
-
-    if (success === "true" && connected) {
-      toast.success(
-        username
-          ? `Successfully connected to ${connected} as ${username}!`
-          : `Successfully connected to ${connected}!`,
-      );
-
-      // Clean up URL
-      window.history.replaceState({}, "", "/dashboard/overview");
-    } else if (error) {
-      // Decode and show error message
-      const errorMessage = decodeURIComponent(error);
-      const shortError =
-        errorMessage.length > 100
-          ? errorMessage.substring(0, 100) + "..."
-          : errorMessage;
-
-      toast.error(`Connection failed: ${shortError}`);
-
-      // Clean up URL
-      window.history.replaceState({}, "", "/dashboard/overview");
-    }
-  }, []); // Run once on mount
-  const hasAIProvider =
-    aiProviders &&
-    Object.values(aiProviders).some(
-      (value, index) => index < 5 && value === true,
-    );
-
-  useEffect(() => {
-    if (isComplete && publishingPostId) {
-      // Refresh posts list
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-
-      // Show success animation
-      if (publishingStatus === "posted") {
-        setShowSuccessAnimation(true);
-        setTimeout(() => {
-          setShowSuccessAnimation(false);
-          setPublishingPostId(null);
-        }, 3000);
-      } else {
-        // Clear publishing state after a delay for failed/partial
-        setTimeout(() => {
-          setPublishingPostId(null);
-        }, 2000);
-      }
-    }
-  }, [isComplete, publishingPostId, publishingStatus]);
-
-  // Toggle platform selection
-  const togglePlatform = (platformId: string) => {
-    if (!connectedPlatforms.includes(platformId)) {
-      toast.error(
-        `${platforms.find((p) => p.id === platformId)?.name} is not connected`,
-      );
-      return;
-    }
-
-    setSelectedPlatforms((prev) =>
-      prev.includes(platformId)
-        ? prev.filter((p) => p !== platformId)
-        : [...prev, platformId],
-    );
-  };
-
-  // Handle image upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newImages = Array.from(e.target.files);
-
-      // Validate file size (max 10MB)
-      const validImages = newImages.filter((img) => {
-        if (img.size > 10 * 1024 * 1024) {
-          toast.error(`${img.name} is too large. Max 10MB per file.`);
-          return false;
-        }
-        return true;
-      });
-
-      setUploadedImages((prev) => [...prev, ...validImages]);
-
-      if (validImages.length > 0) {
-        toast.success(`${validImages.length} image(s) uploaded`);
-      }
-    }
-  };
-
-  // Quick enhance content
-  const handleQuickEnhance = async () => {
-    if (!postContent.trim()) {
-      toast.error("Please write some content first");
-      return;
-    }
-
-    if (selectedPlatforms.length === 0) {
-      toast.error("Please select at least one platform");
-      return;
-    }
-
-    setQuickEnhanceMode(true);
-
-    try {
-      const result = await enhanceMutation.mutateAsync({
-        content: postContent,
-        platforms: selectedPlatforms,
-        image_count: uploadedImages.length,
-        tone: "engaging",
-      });
-
-      // Use first enhancement as default
-      if (result.enhancements.length > 0) {
-        setPostContent(result.enhancements[0].enhanced_content);
-        toast.success("✨ Content enhanced!");
-      }
-    } catch (error) {
-      // Error handled in mutation
-    } finally {
-      setQuickEnhanceMode(false);
-    }
-  };
-  const handlePlatformCardClick = async (platformId: string) => {
-    const isConnected = connectedPlatforms.includes(platformId);
-
-    if (!isConnected) {
-      try {
-        await initiateOAuth(platformId);
-      } catch (error) {
-        // Error already handled
-      }
-    }
-  };
+  // Calculate engagement (mock data for now - would come from analytics API)
+  const totalEngagement = 1234;
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1
-              className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600
-             bg-clip-text text-transparent"
-            >
-              Welcome back, {user?.username}!
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Here's what's happening with your social presence
-            </p>
-          </div>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-gradient-to-r from-blue-600 to-purple-600
-             hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Create Post
-          </Button>
-        </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Welcome Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Welcome back, {user?.username || "User"}! 👋
+        </h1>
+        <p className="text-gray-600 mt-1">
+          Here's what's happening with your social media today.
+        </p>
+      </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {quickStats.map((stat) => (
-            <Card
-              key={stat.label}
-              className="border-0 shadow-md hover:shadow-lg
-             transition-shadow bg-white/80 backdrop-blur"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold">{stat.value}</p>
-                  </div>
-                  <div
-                    className={cn(
-                      "p-3 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100",
-                      stat.color,
-                    )}
-                  >
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Total Posts"
+          value={totalPosts}
+          icon={FileText}
+          colorScheme="blue"
+          loading={postsLoading}
+          trend={{
+            value: 12,
+            label: "vs last week",
+          }}
+        />
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Recent Posts */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Connected Accounts */}
-            <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Connected Accounts</CardTitle>
-                    <CardDescription>
-                      Connect your social media platforms
-                    </CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/dashboard/social">Manage</Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {/* Show loading skeletons when fetching connections */}
-                  {connectionsLoading
-                    ? // Loading state - show skeleton for each platform
-                      platforms.map((platform) => (
-                        <div
-                          key={platform.id}
-                          className="p-4 rounded-xl border-2 border-gray-200 bg-white animate-pulse"
-                        >
-                          <div className="flex flex-col items-center gap-2">
-                            {/* Icon skeleton */}
-                            <div className="w-10 h-10 bg-gray-300 rounded-lg" />
-                            {/* Text skeleton */}
-                            <div className="w-16 h-3 bg-gray-300 rounded" />
-                            <div className="w-20 h-2 bg-gray-200 rounded" />
-                          </div>
-                        </div>
-                      ))
-                    : // Actual content - show when loaded
-                      platforms.map((platform) => {
-                        const isConnected = connectedPlatforms.includes(
-                          platform.id,
-                        );
-                        const PlatformIcon = platform.icon;
+        <StatsCard
+          title="Connected Platforms"
+          value={connectedAccounts}
+          icon={Users}
+          colorScheme="purple"
+          loading={connectionsLoading}
+        />
 
-                        return (
-                          <button
-                            key={platform.id}
-                            onClick={() => handlePlatformCardClick(platform.id)}
-                            disabled={isConnected || isOAuthLoading}
-                            className={cn(
-                              "p-4 rounded-xl border-2 transition-all",
-                              isConnected
-                                ? "border-green-500 bg-green-50"
-                                : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer hover:shadow-md",
-                              connectingPlatform === platform.id &&
-                                "opacity-50",
-                            )}
-                          >
-                            <div className="flex flex-col items-center gap-2">
-                              <div
-                                className={cn(
-                                  "p-2 rounded-lg text-white relative",
-                                  platform.color,
-                                )}
-                              >
-                                <PlatformIcon className="h-5 w-5" />
-                                {connectingPlatform === platform.id && (
-                                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                                    <Loader2 className="h-4 w-4 animate-spin text-white" />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="text-center">
-                                <p className="font-semibold text-xs">
-                                  {platform.name}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  {isConnected
-                                    ? "Connected"
-                                    : connectingPlatform === platform.id
-                                      ? "Connecting..."
-                                      : "Click to connect"}
-                                </p>
-                              </div>
-                              {isConnected && (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                </div>
-              </CardContent>
-            </Card>
+        <StatsCard
+          title="Scheduled Posts"
+          value={scheduledPosts}
+          icon={Calendar}
+          colorScheme="green"
+          loading={postsLoading}
+          trend={{
+            value: 8,
+            label: "vs last week",
+          }}
+        />
 
-            {/* Recent Posts */}
-            <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Recent Posts</CardTitle>
-                    <CardDescription>
-                      Your latest scheduled and published posts
-                    </CardDescription>
-                  </div>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/dashboard/posts">View All</Link>
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {postsLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="animate-pulse">
-                        <div className="h-20 bg-gray-200 rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                ) : posts && posts.length > 0 ? (
-                  <div className="space-y-3">
-                    {posts.slice(0, 6).map((post: any) => (
-                      <div
-                        key={post.id}
-                        className="p-4 rounded-lg border border-gray-200 hover:border-blue-300 
-                        hover:shadow-md transition-all bg-white"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-2">
-                              {post.original_content}
-                            </p>
-                            <div className="flex items-center gap-3 text-xs text-gray-600">
-                              <div className="flex items-center gap-1">
-                                {post.platforms?.map((p: string) => {
-                                  const platform = platforms.find(
-                                    (pl) => pl.id === p.toLowerCase(),
-                                  );
-                                  if (!platform) return null;
-                                  const Icon = platform.icon;
-                                  return <Icon key={p} className="h-3 w-3" />;
-                                })}
-                              </div>
-                              {post.scheduled_for && (
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {format(
-                                    new Date(post.scheduled_for),
-                                    "MMM d, h:mm a",
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          <Badge
-                            variant="secondary"
-                            className={cn(
-                              "text-xs",
-                              post.status === "posted" &&
-                                "bg-green-100 text-green-800",
-                              post.status === "scheduled" &&
-                                "bg-blue-100 text-blue-800",
-                              post.status === "failed" &&
-                                "bg-red-100 text-red-800",
-                            )}
-                          >
-                            {post.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Calendar className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">No posts yet</h3>
-                    <p className="text-gray-600 mb-4">
-                      Create your first post to get started
-                    </p>
-                    <Button onClick={() => setShowCreateModal(true)}>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Post
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Engagement & Quick Actions */}
-          <div className="space-y-6">
-            {/* Engagement Overview */}
-            <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Engagement</CardTitle>
-                    <CardDescription>Last 7 days</CardDescription>
-                  </div>
-                  {summary && summary.avg_engagement_rate > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {summary.avg_engagement_rate.toFixed(1)}% avg rate
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {analyticsLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div
-                        key={i}
-                        className="animate-pulse flex items-center justify-between"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gray-200 rounded-lg" />
-                          <div className="w-16 h-4 bg-gray-200 rounded" />
-                        </div>
-                        <div className="w-12 h-4 bg-gray-200 rounded" />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  engagementMetrics.map((metric) => (
-                    <div
-                      key={metric.label}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gradient-to-br from-blue-50 to-purple-50">
-                          <metric.icon className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <span className="text-sm font-medium">
-                          {metric.label}
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold">
-                          {formatNumber(metric.value)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-
-                {!analyticsLoading && summary?.total_posts === 0 && (
-                  <div className="text-center py-4 text-gray-500 text-sm">
-                    <p>Publish posts to see engagement data</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card className="border-0 shadow-md bg-white/80 backdrop-blur">
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  asChild
-                >
-                  <Link href="/dashboard/calendar">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    View Calendar
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  asChild
-                >
-                  <Link href="/dashboard/analytics">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Analytics
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  asChild
-                >
-                  <Link href="/dashboard/templates">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Templates
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* AI Suggestions */}
-            <AISuggestionsPanel days={7} compact />
-          </div>
-        </div>
-
-        {/* Create Post Modal */}
-
-        <PostCreatorModal
-          isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          platforms={platforms}
-          connectedPlatforms={connectedPlatforms}
+        <StatsCard
+          title="Total Engagement"
+          value={totalEngagement}
+          icon={TrendingUp}
+          colorScheme="amber"
+          trend={{
+            value: 15,
+            label: "vs last week",
+          }}
         />
       </div>
+
+      {/* Engagement Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <StatsCard
+          title="Likes"
+          value={456}
+          icon={Heart}
+          colorScheme="pink"
+          trend={{
+            value: 10,
+            label: "this week",
+          }}
+        />
+
+        <StatsCard
+          title="Comments"
+          value={128}
+          icon={MessageCircle}
+          colorScheme="blue"
+          trend={{
+            value: 5,
+            label: "this week",
+          }}
+        />
+
+        <StatsCard
+          title="Shares"
+          value={89}
+          icon={Share2}
+          colorScheme="green"
+          trend={{
+            value: 18,
+            label: "this week",
+          }}
+        />
+
+        <StatsCard
+          title="Views"
+          value="12.5K"
+          icon={Eye}
+          colorScheme="purple"
+          trend={{
+            value: 22,
+            label: "this week",
+          }}
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <QuickActions
+        onCreatePost={() => setShowPostCreator(true)}
+        onViewCalendar={() => router.push("/dashboard/calendar")}
+        onViewTemplates={() => router.push("/dashboard/templates")}
+        onViewAnalytics={() => router.push("/dashboard/analytics")}
+        onConnectPlatform={() => router.push("/dashboard/social")}
+      />
+
+      {/* Templates Snippet (for new users) */}
+      <TemplatesSnippet />
+
+      {/* Recent Posts */}
+      <RecentPostsWidget
+        posts={posts}
+        loading={postsLoading}
+        onViewAll={() => router.push("/dashboard/posts")}
+        onViewPost={(post) => router.push(`/dashboard/posts/${post.id}`)}
+      />
+
+      {/* Post Creator Modal */}
+      <EnhancedPostCreatorModal
+        isOpen={showPostCreator}
+        onClose={() => setShowPostCreator(false)}
+        platforms={PLATFORMS}
+        connectedPlatforms={connectedPlatforms}
+      />
     </div>
   );
 }
