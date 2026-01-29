@@ -1,16 +1,4 @@
 // app/dashboard/posts/page.tsx
-/**
- * Premium Posts Page
- *
- * A comprehensive posts management page with:
- * - Hero stats section with engagement metrics
- * - Advanced filtering (status, platform, date range, search)
- * - Multiple view modes (grid, list, timeline)
- * - Sortable columns
- * - Premium post cards with animations
- * - Empty states with CTAs
- */
-
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -563,8 +551,14 @@ function EmptyState({
       className="flex flex-col items-center justify-center py-20 px-4"
     >
       <div className="relative mb-6">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-2xl" />
-        <div className="relative p-6 rounded-full bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-lg">
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-blue-500/20
+         to-purple-500/20 rounded-full blur-2xl"
+        />
+        <div
+          className="relative p-6 rounded-full bg-gradient-to-br from-gray-50 to-white border
+         border-gray-100 shadow-lg"
+        >
           <FileText className="h-12 w-12 text-gray-300" />
         </div>
       </div>
@@ -691,13 +685,13 @@ export default function PostsPage() {
   const stats = useMemo(
     () => ({
       total: posts.length,
-      posted: posts.filter((p) => p.status === "posted").length,
-      scheduled: posts.filter((p) => p.status === "scheduled").length,
-      failed: posts.filter((p) => p.status === "failed").length,
+      posted: posts.filter((p: any) => p.status === "posted").length,
+      scheduled: posts.filter((p: any) => p.status === "scheduled").length,
+      failed: posts.filter((p: any) => p.status === "failed").length,
       successRate:
         posts.length > 0
           ? Math.round(
-              (posts.filter((p) => p.status === "posted").length /
+              (posts.filter((p: any) => p.status === "posted").length /
                 posts.length) *
                 100,
             )
@@ -707,7 +701,7 @@ export default function PostsPage() {
   );
 
   const hasFilters =
-    searchQuery || statusFilter !== "all" || platformFilter !== "all";
+    !!searchQuery || statusFilter !== "all" || platformFilter !== "all";
 
   const handleDeletePost = async (id: number) => {
     try {
@@ -769,7 +763,9 @@ export default function PostsPage() {
         </div>
         <Button
           onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all"
+          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700
+           hover:to-indigo-700 shadow-lg shadow-blue-500/25
+            hover:shadow-blue-500/40 transition-all"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Post
@@ -811,7 +807,10 @@ export default function PostsPage() {
       </div>
 
       {/* Filters & View Toggle */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+      <div
+        className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-4 
+      rounded-2xl bg-white border border-gray-100 shadow-sm"
+      >
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -1080,7 +1079,9 @@ export default function PostsPage() {
       {/* Floating Action Button (Mobile) */}
       <button
         onClick={() => setShowCreateModal(true)}
-        className="fixed bottom-6 right-6 lg:hidden p-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 transition-all z-50"
+        className="fixed bottom-6 right-6 lg:hidden p-4 rounded-full bg-gradient-to-r
+         from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/40 
+         hover:shadow-xl hover:shadow-blue-500/50 transition-all z-50"
       >
         <Plus className="h-6 w-6" />
       </button>
