@@ -56,6 +56,8 @@ interface EnhancedPostCreatorModalProps {
     maxImages: number;
   }>;
   connectedPlatforms: string[];
+  /** Pre-filled schedule date from calendar (ISO string format for datetime-local input) */
+  initialScheduledDate?: string;
 }
 
 export function EnhancedPostCreatorModal({
@@ -63,6 +65,7 @@ export function EnhancedPostCreatorModal({
   onClose,
   platforms,
   connectedPlatforms,
+  initialScheduledDate,
 }: EnhancedPostCreatorModalProps) {
   const [activeTab, setActiveTab] = useState("compose");
   const state = usePostCreatorState();
@@ -110,6 +113,13 @@ export function EnhancedPostCreatorModal({
     preSelectedPlatforms,
     connectedPlatforms,
   ]);
+
+  // Pre-fill schedule date when modal opens from calendar
+  useEffect(() => {
+    if (isOpen && initialScheduledDate) {
+      state.setScheduledDate(initialScheduledDate);
+    }
+  }, [isOpen, initialScheduledDate]);
 
   const hasAIProvider =
     aiProviders &&

@@ -1,20 +1,58 @@
-'use client';
+"use client";
 
-import React, { useState, useMemo } from 'react';
-import { 
-  ChevronLeft, ChevronRight, Plus, Clock, CheckCircle, XCircle, AlertCircle,
-  Calendar, Grid, List, Filter, Search, X, Edit2, Trash2, Send, MoreVertical,
-  RefreshCw, Loader2, CalendarDays, Copy, Eye
-} from 'lucide-react';
-import { 
-  Twitter, Facebook, Linkedin, Instagram, Music as TikTokIcon, Youtube 
-} from 'lucide-react';
+import React, { useState, useMemo } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Calendar,
+  Grid,
+  List,
+  Filter,
+  Search,
+  X,
+  Edit2,
+  Trash2,
+  Send,
+  MoreVertical,
+  RefreshCw,
+  Loader2,
+  CalendarDays,
+  Copy,
+  Eye,
+} from "lucide-react";
+import {
+  Twitter,
+  Facebook,
+  Linkedin,
+  Instagram,
+  Music as TikTokIcon,
+  Youtube,
+  Video,
+} from "lucide-react";
 
-import { useCalendarEvents, useDeletePost, usePublishPost, useUpdatePostSchedule } from '@/hooks/api/use-calendar';
-import { useRouter } from 'next/navigation';
-import { dateHelpers } from '@/lib/utils';
-import { CalendarEvent, CalendarDay, Platform, PostStatus, ViewMode } from '@/types/calendar';
-import toast from 'react-hot-toast';
+import {
+  useCalendarEvents,
+  useDeletePost,
+  usePublishPost,
+  useUpdatePostSchedule,
+} from "@/hooks/api/use-calendar";
+import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { useRouter } from "next/navigation";
+import { dateHelpers } from "@/lib/utils";
+import {
+  CalendarEvent,
+  CalendarDay,
+  Platform,
+  PostStatus,
+  ViewMode,
+} from "@/types/calendar";
+import toast from "react-hot-toast";
 
 const platformIcons: Record<Platform, React.ComponentType<any>> = {
   TWITTER: Twitter,
@@ -22,54 +60,158 @@ const platformIcons: Record<Platform, React.ComponentType<any>> = {
   LINKEDIN: Linkedin,
   INSTAGRAM: Instagram,
   TIKTOK: TikTokIcon,
-  YOUTUBE: Youtube
+  YOUTUBE: Youtube,
 };
 
 const platformColors: Record<Platform, string> = {
-  TWITTER: '#1DA1F2',
-  FACEBOOK: '#4267B2',
-  LINKEDIN: '#0077B5',
-  INSTAGRAM: '#E4405F',
-  TIKTOK: '#000000',
-  YOUTUBE: '#FF0000'
+  TWITTER: "#1DA1F2",
+  FACEBOOK: "#4267B2",
+  LINKEDIN: "#0077B5",
+  INSTAGRAM: "#E4405F",
+  TIKTOK: "#000000",
+  YOUTUBE: "#FF0000",
 };
 
-const statusConfig: Record<PostStatus, { 
-  icon: React.ComponentType<any>; 
-  color: string; 
-  label: string;
-  bgClass: string;
-}> = {
-  scheduled: { 
-    icon: Clock, 
-    color: '#FCD34D', 
-    label: 'Scheduled',
-    bgClass: 'bg-[#FCD34D]/10'
+// Platform configs for post creator modal
+const PLATFORMS = [
+  {
+    id: "twitter",
+    name: "Twitter",
+    icon: Twitter,
+    color: "bg-sky-500",
+    limit: 280,
+    maxImages: 4,
   },
-  posted: { 
-    icon: CheckCircle, 
-    color: '#34D399', 
-    label: 'Posted',
-    bgClass: 'bg-[#34D399]/10'
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    icon: Linkedin,
+    color: "bg-blue-600",
+    limit: 3000,
+    maxImages: 20,
   },
-  failed: { 
-    icon: XCircle, 
-    color: '#ef4444', 
-    label: 'Failed',
-    bgClass: 'bg-red-50'
+  {
+    id: "facebook",
+    name: "Facebook",
+    icon: Facebook,
+    color: "bg-blue-700",
+    limit: 63206,
+    maxImages: 10,
   },
-  processing: { 
-    icon: AlertCircle, 
-    color: '#f59e0b', 
-    label: 'Processing',
-    bgClass: 'bg-amber-50'
+  {
+    id: "instagram",
+    name: "Instagram",
+    icon: Instagram,
+    color: "bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500",
+    limit: 2200,
+    maxImages: 10,
   },
-  draft: { 
-    icon: AlertCircle, 
-    color: '#6b7280', 
-    label: 'Draft',
-    bgClass: 'bg-gray-50'
+  {
+    id: "youtube",
+    name: "YouTube",
+    icon: Youtube,
+    color: "bg-red-600",
+    limit: 5000,
+    maxImages: 1,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    icon: Video,
+    color: "bg-black",
+    limit: 2200,
+    maxImages: 10,
+  },
+];
+
+// Utility: Check if a date is in the past (for view-only past dates)
+const isPastDate = (date: Date): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  return checkDate < today;
+};
+
+// Utility: Check if hour on today is in the past
+const isPastHour = (date: Date, hour: number): boolean => {
+  const now = new Date();
+  const checkDate = new Date(date);
+  checkDate.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // If not today, return false (handled by isPastDate)
+  if (checkDate.getTime() !== today.getTime()) return false;
+
+  // For today, check if the hour has passed
+  return hour <= now.getHours();
+};
+
+// Utility: Format date for datetime-local input
+const formatScheduleDate = (date?: Date, hour?: number): string => {
+  if (!date) return "";
+  const scheduleDate = new Date(date);
+  if (hour !== undefined) {
+    scheduleDate.setHours(hour, 0, 0, 0);
+  } else {
+    // Default to 9 AM if no hour specified
+    scheduleDate.setHours(9, 0, 0, 0);
   }
+  // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+  const offset = scheduleDate.getTimezoneOffset();
+  const localDate = new Date(scheduleDate.getTime() - offset * 60 * 1000);
+  return localDate.toISOString().slice(0, 16);
+};
+
+const platformColorsLegacy: Record<Platform, string> = {
+  TWITTER: "#1DA1F2",
+  FACEBOOK: "#4267B2",
+  LINKEDIN: "#0077B5",
+  INSTAGRAM: "#E4405F",
+  TIKTOK: "#000000",
+  YOUTUBE: "#FF0000",
+};
+
+const statusConfig: Record<
+  PostStatus,
+  {
+    icon: React.ComponentType<any>;
+    color: string;
+    label: string;
+    bgClass: string;
+  }
+> = {
+  scheduled: {
+    icon: Clock,
+    color: "#FCD34D",
+    label: "Scheduled",
+    bgClass: "bg-[#FCD34D]/10",
+  },
+  posted: {
+    icon: CheckCircle,
+    color: "#34D399",
+    label: "Posted",
+    bgClass: "bg-[#34D399]/10",
+  },
+  failed: {
+    icon: XCircle,
+    color: "#ef4444",
+    label: "Failed",
+    bgClass: "bg-red-50",
+  },
+  processing: {
+    icon: AlertCircle,
+    color: "#f59e0b",
+    label: "Processing",
+    bgClass: "bg-amber-50",
+  },
+  draft: {
+    icon: AlertCircle,
+    color: "#6b7280",
+    label: "Draft",
+    bgClass: "bg-gray-50",
+  },
 };
 
 // Event Detail Modal
@@ -81,12 +223,12 @@ interface EventModalProps {
   onPublish: (id: number) => void;
 }
 
-const EventModal: React.FC<EventModalProps> = ({ 
-  event, 
-  onClose, 
-  onEdit, 
-  onDelete, 
-  onPublish 
+const EventModal: React.FC<EventModalProps> = ({
+  event,
+  onClose,
+  onEdit,
+  onDelete,
+  onPublish,
 }) => {
   if (!event) return null;
 
@@ -100,18 +242,20 @@ const EventModal: React.FC<EventModalProps> = ({
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <StatusIcon 
-                  className="w-5 h-5" 
+                <StatusIcon
+                  className="w-5 h-5"
                   style={{ color: statusConfig[event.status].color }}
                 />
-                <span 
+                <span
                   className={`text-sm font-medium px-3 py-1 rounded-full ${statusConfig[event.status].bgClass}`}
                   style={{ color: statusConfig[event.status].color }}
                 >
                   {statusConfig[event.status].label}
                 </span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">{event.title}</h3>
+              <h3 className="text-xl font-semibold text-gray-900">
+                {event.title}
+              </h3>
             </div>
             <button
               onClick={onClose}
@@ -129,10 +273,12 @@ const EventModal: React.FC<EventModalProps> = ({
             <Clock className="w-5 h-5 text-[#FCD34D]" />
             <div>
               <p className="text-sm text-gray-500">
-                {event.is_scheduled ? 'Scheduled for' : 'Created at'}
+                {event.is_scheduled ? "Scheduled for" : "Created at"}
               </p>
               <p className="font-medium">
-                {dateHelpers.formatDateTime(event.scheduled_for || event.created_at)}
+                {dateHelpers.formatDateTime(
+                  event.scheduled_for || event.created_at,
+                )}
               </p>
             </div>
           </div>
@@ -141,7 +287,7 @@ const EventModal: React.FC<EventModalProps> = ({
           <div>
             <p className="text-sm text-gray-500 mb-3">Publishing to</p>
             <div className="flex gap-2 flex-wrap">
-              {event.platforms.map(platform => {
+              {event.platforms.map((platform) => {
                 const Icon = platformIcons[platform];
                 return (
                   <span
@@ -149,7 +295,7 @@ const EventModal: React.FC<EventModalProps> = ({
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium"
                     style={{
                       backgroundColor: `${platformColors[platform]}15`,
-                      color: platformColors[platform]
+                      color: platformColors[platform],
                     }}
                   >
                     <Icon className="w-4 h-4" />
@@ -164,7 +310,9 @@ const EventModal: React.FC<EventModalProps> = ({
           <div>
             <p className="text-sm text-gray-500 mb-2">Post Content</p>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-gray-800 whitespace-pre-wrap">{event.content}</p>
+              <p className="text-gray-800 whitespace-pre-wrap">
+                {event.content}
+              </p>
             </div>
           </div>
 
@@ -174,9 +322,9 @@ const EventModal: React.FC<EventModalProps> = ({
               <p className="text-sm text-gray-500 mb-2">Images</p>
               <div className="grid grid-cols-2 gap-2">
                 {event.image_urls.map((url, index) => (
-                  <img 
-                    key={index} 
-                    src={url} 
+                  <img
+                    key={index}
+                    src={url}
                     alt={`Post image ${index + 1}`}
                     className="rounded-lg w-full h-32 object-cover border border-gray-200"
                   />
@@ -194,16 +342,16 @@ const EventModal: React.FC<EventModalProps> = ({
 
           {/* Actions */}
           <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <button 
+            <button
               onClick={() => onEdit(event.id)}
               className="flex-1 bg-[#FCD34D] hover:bg-[#FCD34D]/90 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
             >
               <Edit2 className="w-4 h-4" />
               Edit Post
             </button>
-            
-            {event.status === 'scheduled' && (
-              <button 
+
+            {event.status === "scheduled" && (
+              <button
                 onClick={() => onPublish(event.id)}
                 className="px-4 py-2 bg-[#34D399]/20 hover:bg-[#34D399]/30 text-[#34D399] rounded-lg transition-colors flex items-center justify-center gap-2 font-medium"
               >
@@ -211,8 +359,8 @@ const EventModal: React.FC<EventModalProps> = ({
                 Publish Now
               </button>
             )}
-            
-            <button 
+
+            <button
               onClick={() => onDelete(event.id)}
               className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
             >
@@ -230,27 +378,47 @@ export default function CalendarPage() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null,
+  );
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [draggedEvent, setDraggedEvent] = useState<CalendarEvent | null>(null);
   const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
 
+  // Modal state for post creation
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [prefilledScheduleDate, setPrefilledScheduleDate] =
+    useState<string>("");
+
+  // Fetch connected platforms for modal
+  const { connections } = useSocialConnections();
+  const connectedPlatforms =
+    connections?.map((c: any) => c.platform.toLowerCase()) || [];
+
   // Get date range for current view
-const dateRange = useMemo(() => {
-  const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const end = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-  return {
-    start: start.toISOString().split('T')[0],
-    end: end.toISOString().split('T')[0]
-  };
-}, [currentDate]);
+  const dateRange = useMemo(() => {
+    const start = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1,
+    );
+    const end = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0,
+    );
+    return {
+      start: start.toISOString().split("T")[0],
+      end: end.toISOString().split("T")[0],
+    };
+  }, [currentDate]);
 
   // Fetch calendar events
   const { data, isLoading, isError, refetch } = useCalendarEvents(
     dateRange.start,
-    dateRange.end
+    dateRange.end,
   );
 
   // Mutations
@@ -261,23 +429,23 @@ const dateRange = useMemo(() => {
   // Calendar calculations
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  
+
   const firstDayOfMonth = new Date(year, month, 1);
   const lastDayOfMonth = new Date(year, month + 1, 0);
   const daysInMonth = lastDayOfMonth.getDate();
   const startingDayOfWeek = firstDayOfMonth.getDay();
-  
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // Filter events
   const filteredEvents = useMemo(() => {
     if (!data?.events) return [];
-    
-    return data.events.filter(event => {
+
+    return data.events.filter((event) => {
       // Platform filter
       if (selectedPlatforms.length > 0) {
-        const hasSelectedPlatform = event.platforms.some(p => 
-          selectedPlatforms.includes(p)
+        const hasSelectedPlatform = event.platforms.some((p) =>
+          selectedPlatforms.includes(p),
         );
         if (!hasSelectedPlatform) return false;
       }
@@ -285,8 +453,10 @@ const dateRange = useMemo(() => {
       // Search filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        return event.title.toLowerCase().includes(query) ||
-               event.content.toLowerCase().includes(query);
+        return (
+          event.title.toLowerCase().includes(query) ||
+          event.content.toLowerCase().includes(query)
+        );
       }
 
       return true;
@@ -298,18 +468,23 @@ const dateRange = useMemo(() => {
     const days: CalendarDay[] = [];
     const totalSlots = Math.ceil((daysInMonth + startingDayOfWeek) / 7) * 7;
     const events = filteredEvents || [];
-    
+
     for (let i = 0; i < totalSlots; i++) {
       const dayNumber = i - startingDayOfWeek + 1;
       if (dayNumber > 0 && dayNumber <= daysInMonth) {
         const date = new Date(year, month, dayNumber);
-        const dateStr = date.toISOString().split('T')[0];
-        const dayEvents = events.filter(event => 
-          event.start.startsWith(dateStr)
+        const dateStr = date.toISOString().split("T")[0];
+        const dayEvents = events.filter((event) =>
+          event.start.startsWith(dateStr),
         );
         days.push({ date, dayNumber, events: dayEvents, isCurrentMonth: true });
       } else {
-        days.push({ date: null, dayNumber: null, events: [], isCurrentMonth: false });
+        days.push({
+          date: null,
+          dayNumber: null,
+          events: [],
+          isCurrentMonth: false,
+        });
       }
     }
     return days;
@@ -329,12 +504,12 @@ const dateRange = useMemo(() => {
   // Get events for specific date/time
   const getEventsForSlot = (date: Date, hour?: number) => {
     if (!filteredEvents) return [];
-    
-    return filteredEvents.filter(event => {
+
+    return filteredEvents.filter((event) => {
       const eventDate = new Date(event.start);
       const isSameDay = eventDate.toDateString() === date.toDateString();
-      
-      if (viewMode === 'week' && hour !== undefined) {
+
+      if (viewMode === "week" && hour !== undefined) {
         return isSameDay && eventDate.getHours() === hour;
       }
       return isSameDay;
@@ -347,13 +522,15 @@ const dateRange = useMemo(() => {
     const now = new Date();
     return filteredEvents
       .filter((event) => new Date(event.start) >= now)
-      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+      .sort(
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+      );
   }, [filteredEvents]);
 
   // Navigation
   const goToPrevious = () => {
     const newDate = new Date(currentDate);
-    if (viewMode === 'week') {
+    if (viewMode === "week") {
       newDate.setDate(newDate.getDate() - 7);
     } else {
       newDate.setMonth(newDate.getMonth() - 1);
@@ -363,7 +540,7 @@ const dateRange = useMemo(() => {
 
   const goToNext = () => {
     const newDate = new Date(currentDate);
-    if (viewMode === 'week') {
+    if (viewMode === "week") {
       newDate.setDate(newDate.getDate() + 7);
     } else {
       newDate.setMonth(newDate.getMonth() + 1);
@@ -376,17 +553,33 @@ const dateRange = useMemo(() => {
   // Drag handlers
   const handleDragStart = (e: React.DragEvent, event: CalendarEvent) => {
     setDraggedEvent(event);
-    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.effectAllowed = "move";
   };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = "move";
   };
 
   const handleDrop = async (e: React.DragEvent, date: Date, hour?: number) => {
     e.preventDefault();
     if (!draggedEvent) return;
+
+    // Prevent dropping on past dates
+    if (isPastDate(date)) {
+      toast.error("Cannot reschedule to a past date");
+      setDraggedEvent(null);
+      setHoveredSlot(null);
+      return;
+    }
+
+    // Prevent dropping on past hours for today
+    if (hour !== undefined && isPastHour(date, hour)) {
+      toast.error("Cannot reschedule to a past time");
+      setDraggedEvent(null);
+      setHoveredSlot(null);
+      return;
+    }
 
     const newDate = new Date(date);
     if (hour !== undefined) {
@@ -396,13 +589,13 @@ const dateRange = useMemo(() => {
     try {
       await updateSchedule.mutateAsync({
         postId: draggedEvent.id,
-        scheduledFor: newDate.toISOString()
+        scheduledFor: newDate.toISOString(),
       });
-      toast.success('Post rescheduled successfully');
+      toast.success("Post rescheduled successfully");
     } catch (error) {
-      toast.error('Failed to reschedule post');
+      toast.error("Failed to reschedule post");
     }
-    
+
     setDraggedEvent(null);
     setHoveredSlot(null);
   };
@@ -413,49 +606,57 @@ const dateRange = useMemo(() => {
   };
 
   const handleDelete = async (postId: number) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    if (window.confirm("Are you sure you want to delete this post?")) {
       try {
         await deletePost.mutateAsync(postId);
-        toast.success('Post deleted successfully');
+        toast.success("Post deleted successfully");
         setSelectedEvent(null);
       } catch (error) {
-        toast.error('Failed to delete post');
+        toast.error("Failed to delete post");
       }
     }
   };
 
   const handlePublish = async (postId: number) => {
-    if (window.confirm('Publish this post now?')) {
+    if (window.confirm("Publish this post now?")) {
       try {
         await publishPost.mutateAsync(postId);
-        toast.success('Post is being published');
+        toast.success("Post is being published");
         setSelectedEvent(null);
       } catch (error) {
-        toast.error('Failed to publish post');
+        toast.error("Failed to publish post");
       }
     }
   };
 
   const handleCreatePost = (date?: Date, hour?: number) => {
-    const params = new URLSearchParams();
+    // If date provided, validate it's not in the past
     if (date) {
-      const scheduleDate = new Date(date);
-      if (hour !== undefined) {
-        scheduleDate.setHours(hour, 0, 0, 0);
+      // Block past dates entirely
+      if (isPastDate(date)) {
+        return; // Silent block - past dates shouldn't trigger this
       }
-      params.set('scheduledFor', scheduleDate.toISOString());
+
+      // For today, block past hours
+      if (hour !== undefined && isPastHour(date, hour)) {
+        return; // Silent block - past hours shouldn't trigger this
+      }
     }
-    router.push(`/dashboard/posts/create?${params.toString()}`);
+
+    // Format the date for the modal's datetime-local input
+    const formattedDate = formatScheduleDate(date, hour);
+    setPrefilledScheduleDate(formattedDate);
+    setIsCreateModalOpen(true);
   };
 
   const formatDateRange = () => {
-    if (viewMode === 'week') {
+    if (viewMode === "week") {
       const days = getWeekDays();
       const start = days[0];
       const end = days[6];
-      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      return `${start.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
     } else {
-      return dateHelpers.getMonthName(month) + ' ' + year;
+      return dateHelpers.getMonthName(month) + " " + year;
     }
   };
 
@@ -469,20 +670,26 @@ const dateRange = useMemo(() => {
         {/* Time grid header */}
         <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
           <div className="grid grid-cols-8 gap-0">
-            <div className="p-4 text-sm font-semibold text-gray-600 border-r border-gray-200">Time</div>
+            <div className="p-4 text-sm font-semibold text-gray-600 border-r border-gray-200">
+              Time
+            </div>
             {days.map((day, i) => (
               <div
                 key={i}
                 className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${
-                  dateHelpers.isToday(day) ? 'bg-[#FCD34D]/10' : ''
+                  dateHelpers.isToday(day) ? "bg-[#FCD34D]/10" : ""
                 }`}
               >
                 <div className="text-xs text-gray-500 uppercase mb-1">
-                  {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                  {day.toLocaleDateString("en-US", { weekday: "short" })}
                 </div>
-                <div className={`text-lg font-bold ${
-                  dateHelpers.isToday(day) ? 'text-[#FCD34D]' : 'text-gray-900'
-                }`}>
+                <div
+                  className={`text-lg font-bold ${
+                    dateHelpers.isToday(day)
+                      ? "text-[#FCD34D]"
+                      : "text-gray-900"
+                  }`}
+                >
                   {day.getDate()}
                 </div>
               </div>
@@ -493,25 +700,40 @@ const dateRange = useMemo(() => {
         {/* Time grid body */}
         <div className="relative">
           {hours.map((hour) => (
-            <div key={hour} className="grid grid-cols-8 gap-0 border-b border-gray-100 last:border-b-0">
+            <div
+              key={hour}
+              className="grid grid-cols-8 gap-0 border-b border-gray-100 last:border-b-0"
+            >
               <div className="p-2 text-xs text-gray-500 text-right pr-4 border-r border-gray-200">
-                {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                {hour === 0
+                  ? "12 AM"
+                  : hour < 12
+                    ? `${hour} AM`
+                    : hour === 12
+                      ? "12 PM"
+                      : `${hour - 12} PM`}
               </div>
               {days.map((day, dayIndex) => {
                 const slotEvents = getEventsForSlot(day, hour);
                 const slotKey = `${day.toISOString()}-${hour}`;
-                
+                const isSlotPast = isPastDate(day) || isPastHour(day, hour);
+
                 return (
                   <div
                     key={dayIndex}
                     className={`min-h-[80px] p-1 border-r border-gray-100 last:border-r-0 transition-colors ${
-                      dateHelpers.isToday(day) ? 'bg-[#FCD34D]/5' : 'hover:bg-gray-50'
-                    } ${hoveredSlot === slotKey ? 'bg-[#FCD34D]/20 ring-1 ring-[#FCD34D]' : ''}`}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, day, hour)}
-                    onDragEnter={() => setHoveredSlot(slotKey)}
+                      dateHelpers.isToday(day) && !isSlotPast
+                        ? "bg-[#FCD34D]/5"
+                        : !isSlotPast
+                          ? "hover:bg-gray-50"
+                          : ""
+                    } ${hoveredSlot === slotKey ? "bg-[#FCD34D]/20 ring-1 ring-[#FCD34D]" : ""}
+                    ${isSlotPast ? "bg-gray-100/50 opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                    onDragOver={!isSlotPast ? handleDragOver : undefined}
+                    onDrop={(e) => !isSlotPast && handleDrop(e, day, hour)}
+                    onDragEnter={() => !isSlotPast && setHoveredSlot(slotKey)}
                     onDragLeave={() => setHoveredSlot(null)}
-                    onClick={() => handleCreatePost(day, hour)}
+                    onClick={() => !isSlotPast && handleCreatePost(day, hour)}
                   >
                     {slotEvents.map((event) => (
                       <div
@@ -525,26 +747,31 @@ const dateRange = useMemo(() => {
                         className="mb-1 p-2 rounded-lg text-xs cursor-move hover:scale-105 transition-transform shadow-sm border"
                         style={{
                           backgroundColor: `${event.color}20`,
-                          borderColor: event.color
+                          borderColor: event.color,
                         }}
                       >
                         <div className="flex items-center gap-1 mb-1">
-                          <Clock className="w-3 h-3" style={{ color: event.color }} />
+                          <Clock
+                            className="w-3 h-3"
+                            style={{ color: event.color }}
+                          />
                           <span className="font-medium text-gray-700">
-                            {new Date(event.start).toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit' 
+                            {new Date(event.start).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
                             })}
                           </span>
                         </div>
-                        <p className="text-gray-900 font-medium truncate">{event.title}</p>
+                        <p className="text-gray-900 font-medium truncate">
+                          {event.title}
+                        </p>
                         <div className="flex gap-1 mt-1">
-                          {event.platforms.map(platform => {
+                          {event.platforms.map((platform) => {
                             const Icon = platformIcons[platform];
                             return Icon ? (
-                              <Icon 
-                                key={platform} 
-                                className="w-3 h-3" 
+                              <Icon
+                                key={platform}
+                                className="w-3 h-3"
                                 style={{ color: platformColors[platform] }}
                               />
                             ) : null;
@@ -568,8 +795,11 @@ const dateRange = useMemo(() => {
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {/* Day Headers */}
         <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-          {dayNames.map(day => (
-            <div key={day} className="p-4 text-center text-sm font-semibold text-gray-600 border-r border-gray-200 last:border-r-0">
+          {dayNames.map((day) => (
+            <div
+              key={day}
+              className="p-4 text-center text-sm font-semibold text-gray-600 border-r border-gray-200 last:border-r-0"
+            >
               {day}
             </div>
           ))}
@@ -578,26 +808,40 @@ const dateRange = useMemo(() => {
         {/* Calendar Grid */}
         <div className="grid grid-cols-7">
           {calendarDays.map((day, index) => {
-            const slotKey = day.date ? day.date.toISOString() : `empty-${index}`;
+            const slotKey = day.date
+              ? day.date.toISOString()
+              : `empty-${index}`;
+            const isDatePast = day.date ? isPastDate(day.date) : false;
 
             return (
               <div
                 key={index}
                 className={`min-h-[120px] p-2 border-r border-b border-gray-100 last:border-r-0 ${
-                  !day.isCurrentMonth ? 'bg-gray-50/50' : ''
-                } ${day.date && dateHelpers.isToday(day.date) ? 'bg-[#FCD34D]/10 ring-1 ring-[#FCD34D] ring-inset' : 'hover:bg-gray-50'}
-                ${hoveredSlot === slotKey ? 'bg-[#FCD34D]/20 ring-2 ring-[#FCD34D]' : ''}`}
-                onDragOver={handleDragOver}
-                onDrop={(e) => day.date && handleDrop(e, day.date)}
-                onDragEnter={() => day.date && setHoveredSlot(slotKey)}
+                  !day.isCurrentMonth ? "bg-gray-50/50" : ""
+                } ${day.date && dateHelpers.isToday(day.date) ? "bg-[#FCD34D]/10 ring-1 ring-[#FCD34D] ring-inset" : !isDatePast ? "hover:bg-gray-50" : ""}
+                ${hoveredSlot === slotKey ? "bg-[#FCD34D]/20 ring-2 ring-[#FCD34D]" : ""}
+                ${isDatePast ? "bg-gray-100/50 opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                onDragOver={!isDatePast ? handleDragOver : undefined}
+                onDrop={(e) =>
+                  !isDatePast && day.date && handleDrop(e, day.date)
+                }
+                onDragEnter={() =>
+                  !isDatePast && day.date && setHoveredSlot(slotKey)
+                }
                 onDragLeave={() => setHoveredSlot(null)}
-                onClick={() => day.date && handleCreatePost(day.date)}
+                onClick={() =>
+                  !isDatePast && day.date && handleCreatePost(day.date)
+                }
               >
                 {day.dayNumber && (
                   <>
-                    <div className={`text-sm font-semibold mb-2 ${
-                      day.date && dateHelpers.isToday(day.date) ? 'text-[#FCD34D]' : 'text-gray-700'
-                    }`}>
+                    <div
+                      className={`text-sm font-semibold mb-2 ${
+                        day.date && dateHelpers.isToday(day.date)
+                          ? "text-[#FCD34D]"
+                          : "text-gray-700"
+                      }`}
+                    >
                       {day.dayNumber}
                     </div>
                     <div className="space-y-1">
@@ -613,17 +857,19 @@ const dateRange = useMemo(() => {
                           className="p-1.5 rounded text-xs cursor-move hover:scale-105 transition-transform border"
                           style={{
                             backgroundColor: `${event.color}20`,
-                            borderColor: event.color
+                            borderColor: event.color,
                           }}
                         >
-                          <p className="text-gray-900 font-medium truncate">{event.title}</p>
+                          <p className="text-gray-900 font-medium truncate">
+                            {event.title}
+                          </p>
                           <div className="flex gap-1 mt-0.5">
-                            {event.platforms.slice(0, 3).map(platform => {
+                            {event.platforms.slice(0, 3).map((platform) => {
                               const Icon = platformIcons[platform];
                               return Icon ? (
-                                <Icon 
-                                  key={platform} 
-                                  className="w-2.5 h-2.5" 
+                                <Icon
+                                  key={platform}
+                                  className="w-2.5 h-2.5"
                                   style={{ color: platformColors[platform] }}
                                 />
                               ) : null;
@@ -649,12 +895,15 @@ const dateRange = useMemo(() => {
 
   // Render list view
   const renderListView = () => {
-    const groupedEvents = upcomingEvents.reduce((acc, event) => {
-      const date = new Date(event.start).toDateString();
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(event);
-      return acc;
-    }, {} as Record<string, CalendarEvent[]>);
+    const groupedEvents = upcomingEvents.reduce(
+      (acc, event) => {
+        const date = new Date(event.start).toDateString();
+        if (!acc[date]) acc[date] = [];
+        acc[date].push(event);
+        return acc;
+      },
+      {} as Record<string, CalendarEvent[]>,
+    );
 
     return (
       <div className="space-y-6">
@@ -662,15 +911,15 @@ const dateRange = useMemo(() => {
           <div key={date}>
             <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
               <CalendarDays className="w-5 h-5 text-[#FCD34D]" />
-              {new Date(date).toLocaleDateString('en-US', { 
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric'
+              {new Date(date).toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
               })}
             </h3>
             <div className="space-y-3">
-              {events.map(event => {
+              {events.map((event) => {
                 const StatusIcon = statusConfig[event.status].icon;
                 return (
                   <div
@@ -680,21 +929,23 @@ const dateRange = useMemo(() => {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <StatusIcon 
-                          className="w-5 h-5 mt-0.5" 
+                        <StatusIcon
+                          className="w-5 h-5 mt-0.5"
                           style={{ color: statusConfig[event.status].color }}
                         />
                         <div>
                           <p className="text-sm text-gray-500">
-                            {new Date(event.start).toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit'
+                            {new Date(event.start).toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
                             })}
                           </p>
-                          <h4 className="text-lg font-semibold text-gray-900">{event.title}</h4>
+                          <h4 className="text-lg font-semibold text-gray-900">
+                            {event.title}
+                          </h4>
                         </div>
                       </div>
-                      <span 
+                      <span
                         className={`text-xs font-medium px-3 py-1 rounded-full ${statusConfig[event.status].bgClass}`}
                         style={{ color: statusConfig[event.status].color }}
                       >
@@ -702,10 +953,12 @@ const dateRange = useMemo(() => {
                       </span>
                     </div>
 
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{event.content}</p>
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {event.content}
+                    </p>
 
                     <div className="flex items-center gap-2 flex-wrap">
-                      {event.platforms.map(platform => {
+                      {event.platforms.map((platform) => {
                         const Icon = platformIcons[platform];
                         return (
                           <span
@@ -713,7 +966,7 @@ const dateRange = useMemo(() => {
                             className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium"
                             style={{
                               backgroundColor: `${platformColors[platform]}15`,
-                              color: platformColors[platform]
+                              color: platformColors[platform],
                             }}
                           >
                             {Icon && <Icon className="w-3 h-3" />}
@@ -732,9 +985,13 @@ const dateRange = useMemo(() => {
         {upcomingEvents.length === 0 && (
           <div className="bg-white rounded-xl p-12 text-center border border-gray-200">
             <CalendarDays className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-600 mb-2">No upcoming posts</h3>
-            <p className="text-gray-500 mb-6">Start scheduling your social media content</p>
-            <button 
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+              No upcoming posts
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Start scheduling your social media content
+            </p>
+            <button
               onClick={() => handleCreatePost()}
               className="bg-[#FCD34D] hover:bg-[#FCD34D]/90 text-gray-900 px-6 py-3 rounded-lg font-semibold transition-colors inline-flex items-center gap-2"
             >
@@ -762,9 +1019,11 @@ const dateRange = useMemo(() => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load calendar</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Failed to load calendar
+          </h2>
           <p className="text-gray-600 mb-4">Something went wrong</p>
-          <button 
+          <button
             onClick={() => refetch()}
             className="bg-[#FCD34D] hover:bg-[#FCD34D]/90 text-gray-900 px-6 py-2 rounded-lg font-semibold"
           >
@@ -782,12 +1041,14 @@ const dateRange = useMemo(() => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Content Calendar</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                Content Calendar
+              </h1>
               <p className="text-gray-600 mt-1">
                 {filteredEvents.length} posts scheduled for {formatDateRange()}
               </p>
             </div>
-            <button 
+            <button
               onClick={() => handleCreatePost()}
               className="bg-[#FCD34D] hover:bg-[#FCD34D]/90 text-gray-900 px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 shadow-sm hover:shadow-md"
             >
@@ -797,8 +1058,10 @@ const dateRange = useMemo(() => {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-between gap-4 flex-wrap
-           bg-white p-4 rounded-xl border border-gray-200">
+          <div
+            className="flex items-center justify-between gap-4 flex-wrap
+           bg-white p-4 rounded-xl border border-gray-200"
+          >
             <div className="flex items-center gap-4">
               {/* Navigation */}
               <div className="flex items-center gap-2">
@@ -843,33 +1106,33 @@ const dateRange = useMemo(() => {
               {/* View Mode */}
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('week')}
+                  onClick={() => setViewMode("week")}
                   className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${
-                    viewMode === 'week' 
-                      ? 'bg-[#FCD34D] text-gray-900 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    viewMode === "week"
+                      ? "bg-[#FCD34D] text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   <Calendar className="w-4 h-4" />
                   Week
                 </button>
                 <button
-                  onClick={() => setViewMode('month')}
+                  onClick={() => setViewMode("month")}
                   className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${
-                    viewMode === 'month' 
-                      ? 'bg-[#FCD34D] text-gray-900 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    viewMode === "month"
+                      ? "bg-[#FCD34D] text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   <Grid className="w-4 h-4" />
                   Month
                 </button>
                 <button
-                  onClick={() => setViewMode('list')}
+                  onClick={() => setViewMode("list")}
                   className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${
-                    viewMode === 'list' 
-                      ? 'bg-[#FCD34D] text-gray-900 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    viewMode === "list"
+                      ? "bg-[#FCD34D] text-gray-900 shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   <List className="w-4 h-4" />
@@ -883,14 +1146,18 @@ const dateRange = useMemo(() => {
           {(selectedPlatforms.length > 0 || searchQuery) && (
             <div className="mt-4 flex items-center gap-2 flex-wrap">
               <span className="text-sm text-gray-600">Active filters:</span>
-              {selectedPlatforms.map(platform => (
+              {selectedPlatforms.map((platform) => (
                 <span
                   key={platform}
                   className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-gray-200 text-sm"
                 >
                   {platform}
                   <button
-                    onClick={() => setSelectedPlatforms(prev => prev.filter(p => p !== platform))}
+                    onClick={() =>
+                      setSelectedPlatforms((prev) =>
+                        prev.filter((p) => p !== platform),
+                      )
+                    }
                     className="ml-1 hover:text-red-500"
                   >
                     <X className="w-3 h-3" />
@@ -901,7 +1168,7 @@ const dateRange = useMemo(() => {
                 <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-gray-200 text-sm">
                   Search: "{searchQuery}"
                   <button
-                    onClick={() => setSearchQuery('')}
+                    onClick={() => setSearchQuery("")}
                     className="ml-1 hover:text-red-500"
                   >
                     <X className="w-3 h-3" />
@@ -911,7 +1178,7 @@ const dateRange = useMemo(() => {
               <button
                 onClick={() => {
                   setSelectedPlatforms([]);
-                  setSearchQuery('');
+                  setSearchQuery("");
                 }}
                 className="text-sm text-gray-600 hover:text-gray-900 underline"
               >
@@ -923,21 +1190,33 @@ const dateRange = useMemo(() => {
 
         {/* Calendar Views */}
         <div className="min-h-[600px]">
-          {viewMode === 'week' && renderWeekView()}
-          {viewMode === 'month' && renderMonthView()}
-          {viewMode === 'list' && renderListView()}
+          {viewMode === "week" && renderWeekView()}
+          {viewMode === "month" && renderMonthView()}
+          {viewMode === "list" && renderListView()}
         </div>
 
         {/* Event Detail Modal */}
         {selectedEvent && (
-          <EventModal 
-            event={selectedEvent} 
+          <EventModal
+            event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onPublish={handlePublish}
           />
         )}
+
+        {/* Post Creator Modal */}
+        <EnhancedPostCreatorModal
+          isOpen={isCreateModalOpen}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setPrefilledScheduleDate("");
+          }}
+          platforms={PLATFORMS}
+          connectedPlatforms={connectedPlatforms}
+          initialScheduledDate={prefilledScheduleDate}
+        />
       </div>
     </div>
   );

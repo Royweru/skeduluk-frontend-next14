@@ -22,15 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-
-interface Post {
-  id: number;
-  original_content: string;
-  status: string;
-  scheduled_for: string | null;
-  platforms: string[];
-  created_at: string;
-}
+import { Post } from "@/types";
 
 interface RecentPostsWidgetProps {
   posts: Post[];

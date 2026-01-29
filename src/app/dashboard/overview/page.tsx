@@ -20,6 +20,8 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { TemplatesSnippet } from "@/components/dashboard/templates-snippet";
 import { RecentPostsWidget } from "@/components/dashboard/recent-posts-widget";
 import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { ViewPostModal } from "@/components/modals/view-post-modal";
+import { usePostModalStore } from "@/store/post-modal-store";
 
 // Import hooks for data fetching
 import { usePosts } from "@/hooks/api/use-posts";
@@ -95,6 +97,7 @@ export default function DashboardOverview() {
   // Fetch data
   const { data: postsData, isLoading: postsLoading } = usePosts();
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
+  const { openModal } = usePostModalStore();
 
   const posts = postsData?.posts || [];
   const connectedPlatforms =
@@ -233,7 +236,7 @@ export default function DashboardOverview() {
         posts={posts}
         loading={postsLoading}
         onViewAll={() => router.push("/dashboard/posts")}
-        onViewPost={(post) => router.push(`/dashboard/posts/${post.id}`)}
+        onViewPost={(post) => openModal(post)}
       />
 
       {/* Post Creator Modal */}
@@ -243,6 +246,9 @@ export default function DashboardOverview() {
         platforms={PLATFORMS}
         connectedPlatforms={connectedPlatforms}
       />
+
+      {/* Post View Modal */}
+      <ViewPostModal />
     </div>
   );
 }
