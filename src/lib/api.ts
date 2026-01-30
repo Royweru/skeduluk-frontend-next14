@@ -13,6 +13,7 @@ import {
   EnhancementRequest,
   EnhancementResponse,
   FacebookPagesResponse,
+  Post,
   PostAnalytics,
   PostTimeResponse,
   SelectedPageResponse,
@@ -176,7 +177,8 @@ export const postsApi = {
     limit?: number;
     status?: string;
   }) => {
-    const response = await api.get("/posts", { params });
+    const response = await api.get<Post[]>("/posts", { params });
+    console.log("Fetched posts", response.data);
     return response.data;
   },
 

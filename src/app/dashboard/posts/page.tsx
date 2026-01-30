@@ -612,8 +612,9 @@ export default function PostsPage() {
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [showCreateModal, setShowCreateModal] = useState(false);
-
-  const posts = postsData?.posts || [];
+  console.log("Post data being received in the posts page", postsData);
+  console.log("Is post data array?", Array.isArray(postsData));
+  const posts = (Array.isArray(postsData) ? postsData : postsData) || [];
 
   // Filter & Sort Posts
   const filteredPosts = useMemo(() => {

@@ -94,7 +94,8 @@ export function RecentPostsWidget({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="p-4 rounded-xl border-2 border-gray-200 animate-pulse"
+              className="p-4 rounded-xl border-2 border-gray-200
+               animate-pulse"
             >
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
               <div className="h-3 bg-gray-200 rounded w-1/2" />
@@ -146,7 +147,10 @@ export function RecentPostsWidget({
                   status.bg,
                 )}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div
+                  className="flex items-start justify-between
+                 gap-3"
+                >
                   <div className="flex-1 min-w-0">
                     {/* Content preview */}
                     <p className="text-sm text-gray-900 line-clamp-2 mb-2">
@@ -199,7 +203,8 @@ export function RecentPostsWidget({
                         e.stopPropagation();
                         onViewPost(post);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-white/80 transition-colors"
+                      className="p-1.5 rounded-lg hover:bg-white/80
+                       transition-colors"
                     >
                       <Eye className="h-3 w-3 text-gray-600" />
                     </button>

@@ -1,36 +1,37 @@
 // src/app/dashboard/layout.tsx
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
-import { Sheet, SheetContent } from '@/components/ui/sheet'
-import { DashboardSidebar } from '@/components/layout/dashboard-sidebar'
-import { DashboardHeader } from '@/components/layout/dashboard-header'
-import { AnimatePresence, motion } from 'framer-motion'
-import { useAuth } from '@/providers/auth-provider'
-import { redirect } from 'next/navigation'
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { DashboardSidebar } from "@/components/layout/dashboard-sidebar";
+import { DashboardHeader } from "@/components/layout/dashboard-header";
+import { PostStatusTracker } from "@/components/post-status-tracker";
+import { AnimatePresence, motion } from "framer-motion";
+import { useAuth } from "@/providers/auth-provider";
+import { redirect } from "next/navigation";
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
-  const {isAuthenticated, isLoading} = useAuth() 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const pathname = usePathname()
-const user = null
+  const { isAuthenticated, isLoading } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const user = null;
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      redirect('/auth/login')
+      redirect("/auth/login");
     }
-  }, [isAuthenticated, isLoading])
+  }, [isAuthenticated, isLoading]);
 
   // Close mobile menu when route changes
   useEffect(() => {
-    setMobileOpen(false)
-  }, [pathname])
+    setMobileOpen(false);
+  }, [pathname]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -43,16 +44,19 @@ const user = null
           <p className="text-slate-600">Loading...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Don't render layout if not authenticated
   if (!isAuthenticated) {
-    return null
+    return null;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50">
+      {/* Post Status Tracker - polls for real-time status updates */}
+      <PostStatusTracker />
+
       {/* Mobile Sidebar Sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="p-0 w-72 border-r-0">
@@ -78,7 +82,7 @@ const user = null
       {/* Main Content Area */}
       <div
         className={`transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'
+          sidebarCollapsed ? "lg:pl-20" : "lg:pl-72"
         }`}
       >
         <DashboardHeader
@@ -101,5 +105,5 @@ const user = null
         </AnimatePresence>
       </div>
     </div>
-  )
+  );
 }

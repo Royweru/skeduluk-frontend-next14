@@ -1,7 +1,8 @@
 // hooks/api/use-posts.ts
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { postsApi } from '@/lib/api';
-import toast from 'react-hot-toast';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { postsApi } from "@/lib/api";
+import { Post } from "@/types";
+import toast from "react-hot-toast";
 
 // Types
 export interface EnhancementRequest {
@@ -40,15 +41,26 @@ export function useCreatePost() {
 
   return useMutation({
     mutationFn: postsApi.createPost,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
-      toast.success('🎉 Post created successfully!');
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+
+      // If the post is not scheduled (i.e., publishing immediately),
+      // add it to the tracking store for real-time status polling
+      if (data?.id && data?.status !== "scheduled") {
+        // Import dynamically to avoid circular dependencies
+        import("@/store/post-status-store").then(({ usePostStatusStore }) => {
+          usePostStatusStore.getState().addTrackedPost(data.id);
+        });
+      }
+
+      toast.success("🎉 Post created successfully!");
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || 'Failed to create post';
+      const errorMessage =
+        error.response?.data?.detail || "Failed to create post";
       toast.error(errorMessage);
-      console.error('Create post error:', error);
+      console.error("Create post error:", error);
     },
   });
 }
@@ -56,15 +68,18 @@ export function useCreatePost() {
 // AI Enhancement Hook
 export function useEnhanceContent() {
   return useMutation({
-    mutationFn: async (data: EnhancementRequest): Promise<EnhancementResponse> => {
+    mutationFn: async (
+      data: EnhancementRequest,
+    ): Promise<EnhancementResponse> => {
       return postsApi.enhanceContent(data);
     },
     onSuccess: () => {
       // Success toast handled in component for better UX
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || 'Failed to enhance content';
-      console.error('Enhancement error:', error);
+      const errorMessage =
+        error.response?.data?.detail || "Failed to enhance content";
+      console.error("Enhancement error:", error);
       throw error; // Re-throw to handle in component
     },
   });
@@ -73,15 +88,19 @@ export function useEnhanceContent() {
 // Generate Hashtags Hook
 export function useGenerateHashtags() {
   return useMutation({
-    mutationFn: async ({ content, count = 5 }: HashtagsRequest): Promise<string[]> => {
+    mutationFn: async ({
+      content,
+      count = 5,
+    }: HashtagsRequest): Promise<string[]> => {
       return postsApi.generateHashtags(content, count);
     },
     onSuccess: () => {
       // Success toast handled in component
     },
     onError: (error: any) => {
-      const errorMessage = error.response?.data?.detail || 'Failed to generate hashtags';
-      console.error('Hashtag generation error:', error);
+      const errorMessage =
+        error.response?.data?.detail || "Failed to generate hashtags";
+      console.error("Hashtag generation error:", error);
       throw error;
     },
   });
@@ -90,7 +109,7 @@ export function useGenerateHashtags() {
 // AI Providers Info Hook
 export function useAIProviders() {
   return useQuery<AIProvidersInfo>({
-    queryKey: ['ai-providers'],
+    queryKey: ["ai-providers"],
     queryFn: postsApi.getAIProviders,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
@@ -98,17 +117,20 @@ export function useAIProviders() {
 }
 export function useTestAIProviders() {
   return useQuery({
-    queryKey: ['test-ai-providers'],
+    queryKey: ["test-ai-providers"],
     queryFn: postsApi.testAIproviders,
     staleTime: 1000 * 60, // 1 minute
   });
 }
 
-
 // Get Posts Hook
-export function usePosts(params?: { skip?: number; limit?: number; status?: string }) {
-  return useQuery({
-    queryKey: ['posts', params],
+export function usePosts(params?: {
+  skip?: number;
+  limit?: number;
+  status?: string;
+}) {
+  return useQuery<Post[]>({
+    queryKey: ["posts", params],
     queryFn: () => postsApi.getPosts(params),
   });
 }
@@ -116,7 +138,7 @@ export function usePosts(params?: { skip?: number; limit?: number; status?: stri
 // Get Single Post Hook
 export function usePost(id: number) {
   return useQuery({
-    queryKey: ['post', id],
+    queryKey: ["post", id],
     queryFn: () => postsApi.getPost(id),
     enabled: !!id,
   });
@@ -127,14 +149,14 @@ export function useUpdatePost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => 
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       postsApi.updatePost(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success('Post updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to update post');
+      toast.error(error.response?.data?.detail || "Failed to update post");
     },
   });
 }
@@ -146,21 +168,20 @@ export function usePublishPost() {
   return useMutation({
     mutationFn: (postId: number) => postsApi.publishPostNow(postId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success('Post is being published');
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post is being published");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to publish post');
+      toast.error(error.response?.data?.detail || "Failed to publish post");
     },
   });
 }
 
-
 // Suggest Post Time Hook (optional advanced feature)
 export function useSuggestPostTime(platform: string) {
   return useQuery({
-    queryKey: ['suggest-post-time', platform],
+    queryKey: ["suggest-post-time", platform],
     queryFn: () => postsApi.suggestPostTime(platform),
     enabled: !!platform,
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -174,23 +195,22 @@ export function useDeletePost() {
     mutationFn: (postId: number) => postsApi.deletePost(postId),
     onSuccess: () => {
       // Invalidate calendar queries to refresh the calendar
-      queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
-      queryClient.invalidateQueries({ queryKey: ['posts'] });
-      toast.success('Post deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      toast.success("Post deleted successfully");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete post');
+      toast.error(error.response?.data?.detail || "Failed to delete post");
     },
   });
 }
 
-
-
-
 // Get Posts by Status Hook
-export function usePostsByStatus(status: 'draft' | 'scheduled' | 'published' | 'failed') {
+export function usePostsByStatus(
+  status: "draft" | "scheduled" | "published" | "failed",
+) {
   return useQuery({
-    queryKey: ['posts', 'status', status],
+    queryKey: ["posts", "status", status],
     queryFn: () => postsApi.getPostsByStatus(status),
     enabled: !!status,
   });

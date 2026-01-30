@@ -99,7 +99,7 @@ export default function DashboardOverview() {
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
   const { openModal } = usePostModalStore();
 
-  const posts = postsData?.posts || [];
+  const posts = postsData || [];
   const connectedPlatforms =
     connections?.map((c: any) => c.platform.toLowerCase()) || [];
 
