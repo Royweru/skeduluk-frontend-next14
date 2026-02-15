@@ -1,17 +1,4 @@
 // components/post-creator/enhanced-post-creator-modal.tsx
-/**
- * Enhanced Post Creator Modal
- *
- * This version accepts template data and pre-fills the post creator
- * when a user comes from the templates page.
- *
- * Key improvements:
- * - Accepts pre-filled content from templates
- * - Pre-selects platforms from template
- * - Shows a banner when created from a template
- * - Allows users to further customize template content
- */
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -44,7 +31,7 @@ import { usePostCreatorState } from "@/hooks/use-post-creator-state";
 import { useTemplateCreator } from "@/hooks/use-template-creator";
 import { cn } from "@/lib/utils";
 
-interface EnhancedPostCreatorModalProps {
+interface PostCreatorModalProps {
   isOpen: boolean;
   onClose: () => void;
   platforms: Array<{
@@ -60,13 +47,13 @@ interface EnhancedPostCreatorModalProps {
   initialScheduledDate?: string;
 }
 
-export function EnhancedPostCreatorModal({
+export function PostCreatorModal({
   isOpen,
   onClose,
   platforms,
   connectedPlatforms,
   initialScheduledDate,
-}: EnhancedPostCreatorModalProps) {
+}: PostCreatorModalProps) {
   const [activeTab, setActiveTab] = useState("compose");
   const state = usePostCreatorState();
   const createMutation = useCreatePost();
@@ -97,7 +84,8 @@ export function EnhancedPostCreatorModal({
       // Clear existing selections and set new ones
       state.setSelectedPlatforms([]);
       availablePlatforms.forEach((platform) => {
-        state.togglePlatform(platform);
+        // Lowercase to match PLATFORMS array IDs ("twitter" not "TWITTER")
+        state.togglePlatform(platform.toLowerCase());
       });
 
       // Show success message

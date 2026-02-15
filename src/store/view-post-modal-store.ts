@@ -1,15 +1,9 @@
 // store/post-modal-store.ts
-/**
- * Zustand Store for Post View Modal
- *
- * Manages the state for viewing post details in a modal.
- * Used across dashboard overview and posts page.
- */
 
 import { Post } from "@/types";
 import { create } from "zustand";
 
-interface PostModalState {
+interface ViewPostModalState {
   // Modal visibility
   isOpen: boolean;
 
@@ -21,7 +15,7 @@ interface PostModalState {
   closeModal: () => void;
 }
 
-export const usePostModalStore = create<PostModalState>((set) => ({
+export const useViewPostModalStore = create<ViewPostModalState>((set) => ({
   isOpen: false,
   selectedPost: null,
 

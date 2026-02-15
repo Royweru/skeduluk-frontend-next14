@@ -57,9 +57,9 @@ import {
 } from "date-fns";
 import { Post, PostStatus, SocialPlatform } from "@/types";
 import { usePosts, useDeletePost, usePublishPost } from "@/hooks/api/use-posts";
-import { usePostModalStore } from "@/store/post-modal-store";
+import { useViewPostModalStore } from "@/store/view-post-modal-store";
 import { ViewPostModal } from "@/components/modals/view-post-modal";
-import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { PostCreatorModal } from "@/components/modals/post-creaor-modal";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -600,7 +600,7 @@ export default function PostsPage() {
   const { data: postsData, isLoading } = usePosts();
   const deletePost = useDeletePost();
   const publishPost = usePublishPost();
-  const { openModal } = usePostModalStore();
+  const { openModal } = useViewPostModalStore();
 
   // UI State
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -1070,7 +1070,7 @@ export default function PostsPage() {
 
       {/* Modals */}
       <ViewPostModal />
-      <EnhancedPostCreatorModal
+      <PostCreatorModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         platforms={[]}

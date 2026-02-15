@@ -73,6 +73,9 @@ export const TemplateVariablesModal: React.FC<TemplateVariablesModalProps> = ({
     setSelectedTemplate,
   } = useTemplateCreator();
 
+  // Early return if no template - MUST be before any hook that directly accesses template properties
+  // Note: We cannot put this before hooks (useEffect, useMemo), so we guard inside them
+
   // Initialize default values when template changes
   useEffect(() => {
     if (template) {
@@ -86,9 +89,7 @@ export const TemplateVariablesModal: React.FC<TemplateVariablesModalProps> = ({
     }
   }, [template]);
 
-  if (!template) return null;
-
-  // Generate preview content
+  // Generate preview content - with null guard
   const previewContent = useMemo(() => {
     if (!template) return "";
     return replaceTemplateVariables(
@@ -97,9 +98,19 @@ export const TemplateVariablesModal: React.FC<TemplateVariablesModalProps> = ({
     );
   }, [template, localVariableValues]);
 
-  // Form validation
-  const isFormValid = areRequiredVariablesFilled(template, localVariableValues);
-  const missingVariables = getMissingVariables(template, localVariableValues);
+  // Form validation - with null guards to prevent crashes
+  const isFormValid = useMemo(() => {
+    if (!template) return false;
+    return areRequiredVariablesFilled(template, localVariableValues);
+  }, [template, localVariableValues]);
+
+  const missingVariables = useMemo(() => {
+    if (!template) return [];
+    return getMissingVariables(template, localVariableValues);
+  }, [template, localVariableValues]);
+
+  // Now safe to return null after all hooks have been called
+  if (!template) return null;
 
   const handleVariableChange = (name: string, value: string) => {
     setLocalVariableValues((prev) => ({ ...prev, [name]: value }));
@@ -111,8 +122,8 @@ export const TemplateVariablesModal: React.FC<TemplateVariablesModalProps> = ({
       return;
     }
 
-    // Check for unfilled variables in preview
-    if (previewContent.includes("{")) {
+    // Check for unfilled template variables (only {word} patterns, not general braces)
+    if (/\{[a-zA-Z_][a-zA-Z0-9_]*\}/.test(previewContent)) {
       toast.error("Some variables are still unfilled");
       return;
     }

@@ -50,7 +50,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Post, PostStatus, SocialPlatform } from "@/types";
-import { usePostModalStore } from "@/store/post-modal-store";
+import {useViewPostModalStore } from "@/store/view-post-modal-store";
 import { usePublishPost, useDeletePost } from "@/hooks/api/use-posts";
 import toast from "react-hot-toast";
 
@@ -429,12 +429,10 @@ function StatusBadge({ status, size = "md" }: StatusBadgeProps) {
   );
 }
 
-// ============================================================================
-// MAIN VIEW POST MODAL COMPONENT
-// ============================================================================
+
 
 export function ViewPostModal() {
-  const { isOpen, selectedPost, closeModal } = usePostModalStore();
+  const { isOpen, selectedPost, closeModal } = useViewPostModalStore();
   const publishPost = usePublishPost();
   const deletePost = useDeletePost();
 

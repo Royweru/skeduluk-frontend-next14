@@ -1,20 +1,20 @@
 // src/components/templates/template-use-modal.tsx
-'use client';
+"use client";
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import {
   Zap,
   Eye,
@@ -24,12 +24,12 @@ import {
   AlertCircle,
   CheckCircle2,
   Info,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useUseTemplate } from '@/hooks/api/use-templates';
-import { Template } from '@/types';
-import { useSocialConnections } from '@/hooks/api/use-social-connections';
-import toast from 'react-hot-toast';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useUseTemplate } from "@/hooks/api/use-templates";
+import { Template } from "@/types";
+import { useSocialConnections } from "@/hooks/api/use-social-connections";
+import toast from "react-hot-toast";
 
 interface TemplateUseModalProps {
   template: Template | null;
@@ -39,12 +39,12 @@ interface TemplateUseModalProps {
 }
 
 const PLATFORM_ICONS = {
-  TWITTER: '𝕏',
-  FACEBOOK: '📘',
-  LINKEDIN: '💼',
-  INSTAGRAM: '📷',
-  TIKTOK: '🎵',
-  YOUTUBE: '▶️',
+  TWITTER: "𝕏",
+  FACEBOOK: "📘",
+  LINKEDIN: "💼",
+  INSTAGRAM: "📷",
+  TIKTOK: "🎵",
+  YOUTUBE: "▶️",
 };
 
 export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
@@ -54,9 +54,11 @@ export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
   onSuccess,
 }) => {
   // State
-  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
+  const [variableValues, setVariableValues] = useState<Record<string, string>>(
+    {},
+  );
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledDate, setScheduledDate] = useState("");
   const [useAiEnhancement, setUseAiEnhancement] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -67,16 +69,16 @@ export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
   // Connected platforms
   const connectedPlatforms = useMemo(
     () => connections?.map((c: any) => c.platform.toUpperCase()) || [],
-    [connections]
+    [connections],
   );
 
   // Available platforms (connected AND supported by template)
   const availablePlatforms = useMemo(
     () =>
       template?.supported_platforms.filter((p) =>
-        connectedPlatforms.includes(p)
+        connectedPlatforms.includes(p),
       ) || [],
-    [template, connectedPlatforms]
+    [template, connectedPlatforms],
   );
 
   // Initialize on template change
@@ -96,39 +98,46 @@ export const TemplateUseModal: React.FC<TemplateUseModalProps> = ({
     }
   }, [template, availablePlatforms]);
 
-  if (!template) return null;
+  // Generate preview content - MUST be before early return (React hooks rules)
+  const previewContent = useMemo(() => {
+    if (!template) return "";
 
-  // Generate preview content
-// Around line 101
-const previewContent = useMemo(() => {
-  // ✅ Guard clause at the START of useMemo
-  if (!template) return '';
-  
-  let content = template.content_template;
+    let content = template.content_template;
 
-  // Replace variables
-  Object.entries(variableValues).forEach(([key, value]) => {
-    content = content.replace(new RegExp(`\\{${key}\\}`, 'g'), value || `{${key}}`);
-  });
+    // Replace variables
+    Object.entries(variableValues).forEach(([key, value]) => {
+      content = content.replace(
+        new RegExp(`\\{${key}\\}`, "g"),
+        value || `{${key}}`,
+      );
+    });
 
-  return content;
-}, [template, variableValues]);
+    return content;
+  }, [template, variableValues]);
 
-  // Check if all required variables are filled
+  // Check if all required variables are filled - with null guard
   const isFormValid = useMemo(() => {
+    if (!template) return false;
     if (selectedPlatforms.length === 0) return false;
 
-    const requiredVariables = template.variables?.filter((v) => v.required) || [];
-    return requiredVariables.every(
-      (variable:any) => variableValues[variable.name]?.trim()
+    const requiredVariables =
+      template.variables?.filter((v) => v.required) || [];
+    return requiredVariables.every((variable: any) =>
+      variableValues[variable.name]?.trim(),
     );
   }, [template, variableValues, selectedPlatforms]);
 
-  // Get missing variables
+  // Get missing variables - with null guard
   const missingVariables = useMemo(() => {
+    if (!template) return [];
     const required = template.variables?.filter((v: any) => v.required) || [];
-    return required.filter((variable:any) => !variableValues[variable.name]?.trim());
+    return required.filter(
+      (variable: any) => !variableValues[variable.name]?.trim(),
+    );
   }, [template, variableValues]);
+
+  // Early return AFTER all hooks have been called
+  if (!template) return null;
 
   const handleVariableChange = (name: string, value: string) => {
     setVariableValues((prev) => ({ ...prev, [name]: value }));
@@ -138,13 +147,13 @@ const previewContent = useMemo(() => {
     setSelectedPlatforms((prev) =>
       prev.includes(platform)
         ? prev.filter((p) => p !== platform)
-        : [...prev, platform]
+        : [...prev, platform],
     );
   };
 
   const handleSubmit = async () => {
     if (!isFormValid) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
@@ -163,7 +172,7 @@ const previewContent = useMemo(() => {
       // Reset form
       setVariableValues({});
       setSelectedPlatforms([]);
-      setScheduledDate('');
+      setScheduledDate("");
       setUseAiEnhancement(false);
       setShowPreview(false);
 
@@ -178,7 +187,9 @@ const previewContent = useMemo(() => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col p-0">
         <DialogHeader className="px-6 pt-6 pb-4 border-b">
-          <DialogTitle className="text-2xl">Use Template: {template.name}</DialogTitle>
+          <DialogTitle className="text-2xl">
+            Use Template: {template.name}
+          </DialogTitle>
           <p className="text-gray-600 text-sm mt-1">
             Fill in the variables below to create your post
           </p>
@@ -191,7 +202,7 @@ const previewContent = useMemo(() => {
               <Label className="text-base font-semibold mb-3 block">
                 Select Platforms *
               </Label>
-              
+
               {availablePlatforms.length === 0 ? (
                 <div className="p-4 rounded-lg border-2 border-amber-200 bg-amber-50">
                   <div className="flex items-start gap-2">
@@ -201,8 +212,8 @@ const previewContent = useMemo(() => {
                         No platforms available
                       </p>
                       <p className="text-xs text-amber-700 mt-1">
-                        Please connect at least one of the supported platforms: {' '}
-                        {template.supported_platforms.join(', ')}
+                        Please connect at least one of the supported platforms:{" "}
+                        {template.supported_platforms.join(", ")}
                       </p>
                     </div>
                   </div>
@@ -219,23 +230,31 @@ const previewContent = useMemo(() => {
                         onClick={() => isConnected && togglePlatform(platform)}
                         disabled={!isConnected}
                         className={cn(
-                          'p-3 rounded-lg border-2 transition-all',
-                          !isConnected && 'opacity-50 cursor-not-allowed',
+                          "p-3 rounded-lg border-2 transition-all",
+                          !isConnected && "opacity-50 cursor-not-allowed",
                           isSelected
-                            ? 'border-blue-500 bg-blue-50 shadow-md'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? "border-blue-500 bg-blue-50 shadow-md"
+                            : "border-gray-200 hover:border-gray-300",
                         )}
                       >
                         <div className="flex flex-col items-center gap-2">
                           <span className="text-2xl">
-                            {PLATFORM_ICONS[platform as keyof typeof PLATFORM_ICONS]}
+                            {
+                              PLATFORM_ICONS[
+                                platform as keyof typeof PLATFORM_ICONS
+                              ]
+                            }
                           </span>
-                          <span className="text-sm font-medium">{platform}</span>
+                          <span className="text-sm font-medium">
+                            {platform}
+                          </span>
                           {isSelected && (
                             <CheckCircle2 className="h-4 w-4 text-blue-600" />
                           )}
                           {!isConnected && (
-                            <span className="text-xs text-red-600">Not connected</span>
+                            <span className="text-xs text-red-600">
+                              Not connected
+                            </span>
                           )}
                         </div>
                       </button>
@@ -254,7 +273,10 @@ const previewContent = useMemo(() => {
                 <div className="space-y-4">
                   {template.variables.map((variable) => (
                     <div key={variable.name}>
-                      <Label htmlFor={variable.name} className="mb-2 flex items-center gap-2">
+                      <Label
+                        htmlFor={variable.name}
+                        className="mb-2 flex items-center gap-2"
+                      >
                         {variable.label}
                         {variable.required && (
                           <Badge variant="destructive" className="text-xs">
@@ -263,52 +285,58 @@ const previewContent = useMemo(() => {
                         )}
                       </Label>
 
-                      {variable.type === 'text' || variable.type === 'url' ? (
+                      {variable.type === "text" || variable.type === "url" ? (
                         variable.placeholder.length > 50 ? (
                           <Textarea
                             id={variable.name}
                             placeholder={variable.placeholder}
-                            value={variableValues[variable.name] || ''}
+                            value={variableValues[variable.name] || ""}
                             onChange={(e) =>
-                              handleVariableChange(variable.name, e.target.value)
+                              handleVariableChange(
+                                variable.name,
+                                e.target.value,
+                              )
                             }
                             className="min-h-[100px]"
                           />
                         ) : (
                           <Input
                             id={variable.name}
-                            type={variable.type === 'url' ? 'url' : 'text'}
+                            type={variable.type === "url" ? "url" : "text"}
                             placeholder={variable.placeholder}
-                            value={variableValues[variable.name] || ''}
+                            value={variableValues[variable.name] || ""}
                             onChange={(e) =>
-                              handleVariableChange(variable.name, e.target.value)
+                              handleVariableChange(
+                                variable.name,
+                                e.target.value,
+                              )
                             }
                           />
                         )
-                      ) : variable.type === 'date' ? (
+                      ) : variable.type === "date" ? (
                         <Input
                           id={variable.name}
                           type="date"
-                          value={variableValues[variable.name] || ''}
+                          value={variableValues[variable.name] || ""}
                           onChange={(e) =>
                             handleVariableChange(variable.name, e.target.value)
                           }
                         />
-                      ) : variable.type === 'number' ? (
+                      ) : variable.type === "number" ? (
                         <Input
                           id={variable.name}
                           type="number"
                           placeholder={variable.placeholder}
-                          value={variableValues[variable.name] || ''}
+                          value={variableValues[variable.name] || ""}
                           onChange={(e) =>
                             handleVariableChange(variable.name, e.target.value)
                           }
                         />
-                      ) : variable.type === 'hashtags' ? (
+                      ) : variable.type === "hashtags" ? (
                         <Input
                           id={variable.name}
                           placeholder={variable.placeholder}
-                          value={variableValues[variable.name] || ''}
+                          value={variableValues[variable.name] || ""}
                           onChange={(e) =>
                             handleVariableChange(variable.name, e.target.value)
                           }
@@ -317,7 +345,7 @@ const previewContent = useMemo(() => {
                         <Input
                           id={variable.name}
                           placeholder={variable.placeholder}
-                          value={variableValues[variable.name] || ''}
+                          value={variableValues[variable.name] || ""}
                           onChange={(e) =>
                             handleVariableChange(variable.name, e.target.value)
                           }
@@ -339,7 +367,7 @@ const previewContent = useMemo(() => {
                   onClick={() => setShowPreview(!showPreview)}
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  {showPreview ? 'Hide' : 'Show'} Preview
+                  {showPreview ? "Hide" : "Show"} Preview
                 </Button>
               </div>
 
@@ -348,14 +376,15 @@ const previewContent = useMemo(() => {
                   <p className="text-sm text-gray-700 whitespace-pre-wrap">
                     {previewContent}
                   </p>
-                  
+
                   {/* Show unfilled variables */}
-                  {previewContent.includes('{') && (
+                  {previewContent.includes("{") && (
                     <div className="mt-3 pt-3 border-t border-gray-300">
                       <div className="flex items-start gap-2 text-xs text-amber-700">
                         <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                         <span>
-                          Variables in {'{'}curly braces{'}'} will be filled when you complete the form above
+                          Variables in {"{"}curly braces{"}"} will be filled
+                          when you complete the form above
                         </span>
                       </div>
                     </div>
@@ -387,7 +416,9 @@ const previewContent = useMemo(() => {
               <div className="p-4 rounded-lg border-2 border-gray-200 bg-white">
                 <div className="flex items-center gap-2 mb-3">
                   <Calendar className="h-5 w-5 text-blue-600" />
-                  <Label className="font-medium">Schedule Post (Optional)</Label>
+                  <Label className="font-medium">
+                    Schedule Post (Optional)
+                  </Label>
                 </div>
                 <Input
                   type="datetime-local"
@@ -397,7 +428,7 @@ const previewContent = useMemo(() => {
                 />
                 {scheduledDate && (
                   <p className="text-xs text-gray-600 mt-2">
-                    Post will be published on{' '}
+                    Post will be published on{" "}
                     {new Date(scheduledDate).toLocaleString()}
                   </p>
                 )}
@@ -447,7 +478,7 @@ const previewContent = useMemo(() => {
             ) : (
               <>
                 <Zap className="h-4 w-4 mr-2" />
-                {scheduledDate ? 'Schedule Post' : 'Create Post'}
+                {scheduledDate ? "Schedule Post" : "Create Post"}
               </>
             )}
           </Button>

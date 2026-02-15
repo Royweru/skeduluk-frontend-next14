@@ -1,16 +1,5 @@
 // components/dashboard/templates-snippet.tsx
-/**
- * Templates Discovery Snippet
- *
- * A small banner/card component that appears on the dashboard to
- * introduce new users to the templates feature.
- *
- * Features:
- * - Can be dismissed
- * - Shows 3 popular templates
- * - Links to templates page
- * - Remembers dismissal in localStorage
- */
+
 
 "use client";
 
@@ -20,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { X, Sparkles, ArrowRight, TrendingUp, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTemplates } from "@/hooks/api/use-templates";
-import { cn } from "@/lib/utils";
 import { Template } from "@/types";
 
 export function TemplatesSnippet() {

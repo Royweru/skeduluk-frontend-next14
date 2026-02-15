@@ -40,7 +40,7 @@ import {
 import { TemplateCard } from "@/components/templates/template-card";
 import { TemplateDetailModal } from "@/components/templates/template-detail-modal";
 import { TemplateVariablesModal } from "@/components/modals/template-variables-modal";
-import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { PostCreatorModal } from "@/components/modals/post-creaor-modal";
 import { FolderManager } from "@/components/templates/folder-manager";
 import {
   useTemplates,
@@ -386,7 +386,7 @@ export default function TemplatesPage() {
         onContinueToPostCreator={handleContinueToPostCreator}
       />
 
-      <EnhancedPostCreatorModal
+      <PostCreatorModal
         isOpen={showPostCreator}
         onClose={() => setShowPostCreator(false)}
         platforms={PLATFORMS}

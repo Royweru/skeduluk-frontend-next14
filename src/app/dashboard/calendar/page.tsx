@@ -42,7 +42,7 @@ import {
   useUpdatePostSchedule,
 } from "@/hooks/api/use-calendar";
 import { useSocialConnections } from "@/hooks/api/use-social-connections";
-import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { PostCreatorModal } from "@/components/modals/post-creaor-modal";
 import { useRouter } from "next/navigation";
 import { dateHelpers } from "@/lib/utils";
 import {
@@ -1207,7 +1207,7 @@ export default function CalendarPage() {
         )}
 
         {/* Post Creator Modal */}
-        <EnhancedPostCreatorModal
+        <PostCreatorModal
           isOpen={isCreateModalOpen}
           onClose={() => {
             setIsCreateModalOpen(false);

@@ -81,7 +81,7 @@ export function usePostCreatorState() {
     }
 
     if (newFiles.length > 0) {
-      toast.success(`✅ ${newFiles.length} file(s) uploaded`);
+      toast.success(` ${newFiles.length} file(s) uploaded`);
     }
   }, [customizePerPlatform]);
 
@@ -149,7 +149,7 @@ export function usePostCreatorState() {
     if (generatedHashtags.length === 0) return;
     const hashtagsText = '\n\n' + generatedHashtags.join(' ');
     setContent(prev => prev + hashtagsText);
-    toast.success('✅ Hashtags added to content!');
+    toast.success(' Hashtags added to content!');
   }, [generatedHashtags]);
 
   // Use AI enhancement
@@ -167,7 +167,7 @@ export function usePostCreatorState() {
     }
     
     setSelectedEnhancement(enhancement.platform);
-    toast.success(`✅ Using ${enhancement.platform} version!`);
+    toast.success(` Using ${enhancement.platform} version!`);
   }, [customizePerPlatform]);
 
   // Copy enhancement to clipboard

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { postsApi } from "@/lib/api";
 import { Post } from "@/types";
 import toast from "react-hot-toast";
+import { usePostStatusPolling } from "./use-post-status";
 
 // Types
 export interface EnhancementRequest {
@@ -44,14 +45,9 @@ export function useCreatePost() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
-
-      // If the post is not scheduled (i.e., publishing immediately),
-      // add it to the tracking store for real-time status polling
+          
       if (data?.id && data?.status !== "scheduled") {
-        // Import dynamically to avoid circular dependencies
-        import("@/store/post-status-store").then(({ usePostStatusStore }) => {
-          usePostStatusStore.getState().addTrackedPost(data.id);
-        });
+        const {status} = usePostStatusPolling(data.id)
       }
 
       toast.success("🎉 Post created successfully!");

@@ -19,9 +19,9 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 import { TemplatesSnippet } from "@/components/dashboard/templates-snippet";
 import { RecentPostsWidget } from "@/components/dashboard/recent-posts-widget";
-import { EnhancedPostCreatorModal } from "@/components/modals/enhanced-post-creaor-modal";
+import { PostCreatorModal } from "@/components/modals/post-creaor-modal";
 import { ViewPostModal } from "@/components/modals/view-post-modal";
-import { usePostModalStore } from "@/store/post-modal-store";
+import { useViewPostModalStore } from "@/store/view-post-modal-store";
 
 // Import hooks for data fetching
 import { usePosts } from "@/hooks/api/use-posts";
@@ -36,6 +36,7 @@ import {
   Video,
 } from "lucide-react";
 import { Post } from "@/types";
+import { usePostStatusPolling } from "@/hooks/api/use-post-status";
 
 // Platform configs
 const PLATFORMS = [
@@ -97,7 +98,7 @@ export default function DashboardOverview() {
   // Fetch data
   const { data: postsData, isLoading: postsLoading } = usePosts();
   const { connections, isLoading: connectionsLoading } = useSocialConnections();
-  const { openModal } = usePostModalStore();
+  const { openModal: openPostModal } = useViewPostModalStore();
 
   const posts = postsData || [];
   const connectedPlatforms =
@@ -113,13 +114,14 @@ export default function DashboardOverview() {
 
   // Calculate engagement (mock data for now - would come from analytics API)
   const totalEngagement = 1234;
+  //post status
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Welcome Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
-          Welcome back, {user?.username || "User"}! 👋
+          Welcome back, {user?.username || "User"}!
         </h1>
         <p className="text-gray-600 mt-1">
           Here's what's happening with your social media today.
@@ -236,11 +238,11 @@ export default function DashboardOverview() {
         posts={posts}
         loading={postsLoading}
         onViewAll={() => router.push("/dashboard/posts")}
-        onViewPost={(post) => openModal(post)}
+        onViewPost={(post) => openPostModal(post)}
       />
 
       {/* Post Creator Modal */}
-      <EnhancedPostCreatorModal
+      <PostCreatorModal
         isOpen={showPostCreator}
         onClose={() => setShowPostCreator(false)}
         platforms={PLATFORMS}

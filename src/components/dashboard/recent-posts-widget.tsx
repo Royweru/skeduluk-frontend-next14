@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Post } from "@/types";
+import { usePostStatus } from "@/hooks/api/use-post-status";
 
 interface RecentPostsWidgetProps {
   posts: Post[];
@@ -84,6 +85,7 @@ export function RecentPostsWidget({
   onViewAll,
   onViewPost,
 }: RecentPostsWidgetProps) {
+
   if (loading) {
     return (
       <div className="space-y-4">

@@ -20,7 +20,7 @@ interface PostStatus {
   results: PostResult[];
 }
 
-export function usePostStatusPolling(postId: number | null, enabled: boolean = false) {
+export function usePostStatusPolling(postId: number | null, enabled: boolean = true) {
   const [hasNotified, setHasNotified] = useState(false);
   const [initialStatus, setInitialStatus] = useState<string | null>(null);
 
